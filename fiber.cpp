@@ -41,32 +41,12 @@ static void fiber4(const acl::string& buf)
 
 #endif
 
-static void usage(const char* procname)
-{
-	printf("usage: %s -h [help] -n fibers_count\r\n", procname);
-}
-
-int main(int argc, char *argv[])
+int main(void)
 {
 	int  ch, n = 10;
 
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);
-
-	while ((ch = getopt(argc, argv, "hn:")) > 0)
-	{
-		switch (ch)
-		{
-		case 'h':
-			usage(argv[0]);
-			return 0;
-		case 'n':
-			n = atoi(optarg);
-			break;
-		default:
-			break;
-		}
-	}
 
 	for (int i = 0; i < n; i++)
 	{

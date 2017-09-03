@@ -63,33 +63,13 @@ private:
 	acl::server_socket& ss_;
 };
 
-static void usage(const char* procname)
-{
-	printf("usage: %s -h [help] -s listen_addr\r\n", procname);
-}
-
-int main(int argc, char *argv[])
+int main(void)
 {
 	int  ch;
 
 	acl::acl_cpp_init();
 	acl::string addr("127.0.0.1:9006");
 	acl::log::stdout_open(true);
-
-	while ((ch = getopt(argc, argv, "hs:")) > 0)
-	{
-		switch (ch)
-		{
-		case 'h':
-			usage(argv[0]);
-			return 0;
-		case 's':
-			addr = optarg;
-			break;
-		default:
-			break;
-		}
-	}
 
 	acl::server_socket ss;
 	if (ss.open(addr) == false)
