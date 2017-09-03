@@ -1,6 +1,6 @@
 all: fiber thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod
 clean cl:
-	rm -f fiber thread thread_mbox fiber_echod http_request redis master_threads
+	rm -f fiber thread thread_mbox fiber_echod http_request redis master_threads_echod
 fiber: fiber.cpp
 	g++ fiber.cpp -lfiber_cpp -lfiber -lacl_all -lz -ldl -lpthread -o fiber
 thread: thread.cpp
