@@ -1,6 +1,6 @@
-all: fiber thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql
+all: fiber thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool
 clean cl:
-	rm -f fiber thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql
+	rm -f fiber thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool
 fiber: fiber.cpp
 	g++ fiber.cpp -lfiber_cpp -lfiber -lacl_all -lz -ldl -lpthread -o fiber
 thread: thread.cpp
@@ -19,3 +19,5 @@ master_threads_echod: master_threads_echod.cpp
 	g++ master_threads_echod.cpp -lacl_all -ldl -lz -lpthread -o master_threads_echod
 mysql: mysql.cpp
 	g++ mysql.cpp -lacl_all -ldl -lz -lpthread -o mysql
+mysql_pool: mysql_pool.cpp
+	g++ mysql_pool.cpp -lacl_all -ldl -lz -lpthread -o mysql_pool
