@@ -3,9 +3,9 @@
 You should make and install rpm of acl first showing below:
 ```building
 #cd acl/packaging; make
-#cd x86_64
-#rpm -ivh acl-libs-3.3.0-9.x86_64.rpm
+#cd x86_64; rpm -ivh acl-libs-3.3.0-9.x86_64.rpm
 ```
 ### Compile these demos
-#cd demo
-#make
+```building demos
+#cd demo; make
+```
