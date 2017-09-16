@@ -17,7 +17,6 @@ protected:
 };
 
 #ifdef	ACL_USE_CPP11
-
 static void fiber1(void)
 {
 	printf("in fiber: %d\r\n", acl::fiber::self());
