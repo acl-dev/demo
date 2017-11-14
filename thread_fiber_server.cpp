@@ -72,7 +72,7 @@ public:
 	~consumer_thread(void) {}
 
 private:
-	acl::mbox<acl::socket_stream> mbox_;
+	acl::mbox<acl::socket_stream>& mbox_;
 
 	// @override
 	void* run(void)
