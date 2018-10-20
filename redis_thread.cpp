@@ -7,6 +7,7 @@ public:
 	~redis_thread(void) {}
 
 protected:
+	// @override
 	void* run(void)
 	{
 		for (int i = 0; i < 1000; i++) {
