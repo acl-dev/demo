@@ -1,7 +1,8 @@
 #include <getopt.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-static bool test(acl::http_request_pool& hpool, const char* url, bool keep_alive)
+static bool test(acl::http_request_pool& hpool, const char* url,
+	bool keep_alive, acl::string& redirect_url)
 {
 	acl::http_request* req = (acl::http_request*) hpool.peek();
 	if (req == NULL) {
@@ -40,10 +41,43 @@ static bool test(acl::http_request_pool& hpool, const char* url, bool keep_alive
 			return false;
 		}
 	}
+
+	if (req->http_status() == 302) {
+		const char* location = req->header_value("Location");
+		if (location) {
+			redirect_url = location;
+		}
+	}
+
 	printf("url=%s, addr=%s, ok, status=%d\r\n", url, hpool.get_addr(),
 		req->http_status());
 	hpool.put(req, keep_alive && req->keep_alive());
 
+	return true;
+}
+
+static bool test(acl::http_request_manager& manager,
+	acl::http_request_pool& hpool, const char* url, bool keep_alive)
+{
+	acl::string redirect_url;
+
+	do {
+		redirect_url.clear();
+		if (test(hpool, url, keep_alive, redirect_url) == false) {
+			return false;
+		}
+		if (redirect_url.empty()) {
+			break;
+		}
+
+		acl::string addr;
+		acl::http_request_pool* hp = (acl::http_request_pool*)
+			manager.peek(addr);
+		if (hp == NULL) {
+			printf("no addr\r\n");
+			return false;
+		}
+	} while (true);
 	return true;
 }
 
@@ -106,7 +140,7 @@ int main(int argc, char* argv[])
 		}
 		struct timeval begin, end;
 		gettimeofday(&begin, NULL);
-		test(*hpool, url, keep_alive);
+		test(manager, *hpool, url, keep_alive);
 		gettimeofday(&end, NULL);
 		printf("addr=%s, cost=%.2f ms\r\n", hpool->get_addr(),
 			acl::stamp_sub(end, begin));

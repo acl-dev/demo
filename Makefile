@@ -1,6 +1,6 @@
-all: fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event
+all: fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event connect
 clean cl:
-	rm -f fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event
+	rm -f fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event connect
 fiber: fiber.cpp
 	g++ fiber.cpp -lfiber_cpp -lfiber -lacl_all -lz -ldl -lpthread -o fiber
 thread_fiber_client: thread_fiber_client.cpp
@@ -41,3 +41,5 @@ fiber_mutex: fiber_mutex.cpp
 	g++ fiber_mutex.cpp -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o fiber_mutex
 fiber_event: fiber_event.cpp
 	g++ fiber_event.cpp -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o fiber_event
+connect: connect.cpp
+	g++ connect.cpp -o connect -lfiber_cpp -lacl_all -lfiber -lz -lpthread -ldl
