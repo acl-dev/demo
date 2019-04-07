@@ -13,6 +13,8 @@ public:
 	}
 };
 
+#define MAX	100000000
+
 class producer : public acl::thread
 {
 public:
@@ -25,8 +27,10 @@ private:
 	void* run(void)
 	{
 		printf("producer: %lu\r\n", acl::thread::thread_self());
-		myobj* o = new myobj;
-		mbox_.push(o);
+		for (int i = 0; i < MAX; i++) {
+			myobj* o = new myobj;
+			mbox_.push(o);
+		}
 		printf("producer over\r\n");
 		return NULL;
 	}
@@ -46,9 +50,14 @@ private:
 		printf("consumer: %lu\r\n", acl::thread::thread_self());
 		sleep(1);
 		printf("wakeup\r\n");
-		myobj* o = mbox_.pop();
-		o->run();
-		delete o;
+
+		for (int i = 0; i < MAX; i++) {
+			myobj* o = mbox_.pop();
+			if (i < 10) {
+				o->run();
+			}
+			delete o;
+		}
 		return NULL;
 	}
 };
