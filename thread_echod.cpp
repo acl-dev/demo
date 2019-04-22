@@ -62,8 +62,6 @@ private:
 
 int main(void)
 {
-	int  ch;
-
 	acl::acl_cpp_init();
 	acl::string addr("127.0.0.1:9206");
 	acl::log::stdout_open(true);

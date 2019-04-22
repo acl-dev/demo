@@ -8,13 +8,11 @@ public:
 
 protected:
 	// @override
-	void run(void)
-	{
+	void run(void) {
 		printf("fiber-%d-%d running\r\n", get_id(), acl::fiber::self());
 
 		char buf[8192];
-		while (true)
-		{
+		while (true) {
 			int ret = conn_->read(buf, sizeof(buf), false);
 			if (ret == -1)
 				break;
@@ -40,13 +38,10 @@ public:
 
 protected:
 	// @override
-	void run(void)
-	{
-		while (true)
-		{
+	void run(void) {
+		while (true) {
 			acl::socket_stream* conn = ss_.accept();
-			if (conn == NULL)
-			{
+			if (conn == NULL) {
 				printf("accept error %s\r\n", acl::last_serror());
 				break;
 			}
@@ -65,15 +60,12 @@ private:
 
 int main(void)
 {
-	int  ch;
-
 	acl::acl_cpp_init();
-	acl::string addr("127.0.0.1:9006");
+	acl::string addr("127.0.0.1:9206");
 	acl::log::stdout_open(true);
 
 	acl::server_socket ss;
-	if (ss.open(addr) == false)
-	{
+	if (ss.open(addr) == false) {
 		printf("listen %s error %s\r\n", addr.c_str(), acl::last_serror());
 		return 1;
 	}
