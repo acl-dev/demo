@@ -1,6 +1,6 @@
-all: fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event connect fiber_redis thread_fiber_redis thread_echod tcp_server
+all: fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event connect fiber_redis thread_fiber_redis thread_echod tcp_server redis_hash
 clean cl:
-	rm -f fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event connect fiber_redis thread_fiber_redis thread_echod tcp_server
+	rm -f fiber thread_fiber_server thread_fiber_client thread thread_pool thread_mbox fiber_echod http_request redis master_threads_echod mysql mysql_pool tbox thread_cond file_lock redis_thread http_manager redis_set fiber_mutex fiber_event connect fiber_redis thread_fiber_redis thread_echod tcp_server redis_hash
 
 fiber: fiber.cpp
 	g++ fiber.cpp -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o fiber
@@ -20,6 +20,8 @@ http_request: http_request.cpp
 	g++ http_request.cpp -lacl_all -ldl -lz -lpthread -o http_request
 redis: redis.cpp
 	g++ redis.cpp -lacl_all -ldl -lz -lpthread -o redis
+redis_hash: redis_hash.cpp
+	g++ redis_hash.cpp -lacl_all -ldl -lz -lpthread -o redis_hash
 redis_thread: redis_thread.cpp
 	g++ redis_thread.cpp -lacl_all -ldl -lz -lpthread -o redis_thread
 master_threads_echod: master_threads_echod.cpp
