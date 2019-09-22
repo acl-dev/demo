@@ -1,9 +1,41 @@
 #include <acl-lib/acl/lib_acl.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <getopt.h>
-#include <errno.h>
-#include <string.h>
 
+void resolve2(const char* domain)
+{
+	char   **pptr;
+	struct hostent *hptr;
+	char   str[32];
+
+	if ((hptr = gethostbyname(domain)) == NULL) {
+		printf("gethostbyname error for host: %s\n",domain);
+		return;
+	}
+
+	printf("official hostname:%s\n", hptr->h_name);
+	for (pptr = hptr->h_aliases; *pptr != NULL; pptr++) {
+		printf(" alias:%s\n",*pptr);
+	}
+
+	switch(hptr->h_addrtype) {
+	case AF_INET:
+	case AF_INET6:
+		pptr=hptr->h_addr_list;
+		for(; *pptr!=NULL; pptr++) {
+			printf(" address:%s\n", inet_ntop(hptr->h_addrtype,
+				*pptr, str, sizeof(str)));
+		}
+		printf(" first address: %s\n", inet_ntop(hptr->h_addrtype,
+			hptr->h_addr, str, sizeof(str)));
+		break;
+	default:
+		printf("unknown address type\n");
+		break;
+	}
+}
 static void resolve(const char* domain)
 {
 	ACL_ITER iter;
@@ -52,5 +84,7 @@ int main(int argc, char* argv[])
 	}
 
 	resolve(buf);
+	printf("\r\n");
+	resolve2(buf);
 	return (0);
 }
