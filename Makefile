@@ -100,4 +100,4 @@ thread_echod: thread_echod.cpp
 tcp_server: tcp_server.cpp
 	g++ tcp_server.cpp -lacl_all -lz -ldl -lpthread -o tcp_server
 gethostbyname: gethostbyname.cpp
-	g++ gethostbyname.cpp -lacl_all -o gethostbyname
+	g++ gethostbyname.cpp -lacl_all -lpthread -o gethostbyname
