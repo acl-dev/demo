@@ -8,7 +8,7 @@ public:
 protected:
 	// @override
 	void* run(void) {
-		printf("thread-%d running\r\n", acl::thread::self());
+		printf("thread-%lu running\r\n", acl::thread::self());
 
 		char buf[8192];
 		while (true) {
