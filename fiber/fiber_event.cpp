@@ -68,7 +68,7 @@ int main(void)
 	acl::fiber_event event;
 
 	std::vector<acl::thread*> threads;
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 2; i++) {
 		acl::thread* thr = new mythread(event, count);
 		threads.push_back(thr);
 		thr->start();

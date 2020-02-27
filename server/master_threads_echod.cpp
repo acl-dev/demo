@@ -66,10 +66,9 @@ int main(int argc, char* argv[])
 		}
 	}
 	master_service ms;
-	if (daemon_mode)
+	if (daemon_mode) {
 		ms.run_daemon(argc, argv);
-	else
-	{
+	} else {
 		printf("run_alone mode, addrs: %s\r\n", addrs.c_str());
 		ms.run_alone(addrs, NULL, 0, 100);
 	}
