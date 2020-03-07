@@ -42,7 +42,7 @@ static void fiber4(const acl::string& buf)
 
 int main(void)
 {
-	int  ch, n = 10;
+	int  n = 10;
 
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);

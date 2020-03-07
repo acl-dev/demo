@@ -55,7 +55,8 @@ private:
 			if (__curr_producer == 0 && tbox_.size() == 0)
 				break;
 		}
-		printf("thread-%lu pop over, n=%d\r\n", acl::thread::self(), n);
+		printf("thread-%lu pop over, n=%d, producers=%d\r\n",
+			acl::thread::self(), n, nproducers_);
 		return NULL;
 	}
 };

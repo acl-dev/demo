@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <getopt.h>
 
-void resolve2(const char* domain)
+static void resolve2(const char* domain)
 {
 	char   **pptr;
 	struct hostent *hptr;
