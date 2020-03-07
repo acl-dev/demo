@@ -9,7 +9,6 @@ CFLAGS = -c -g -W \
 -Wshadow \
 -Wpointer-arith \
 -Waggregate-return \
--Wmissing-prototypes \
 -D_REENTRANT \
 -D_USE_FAST_MACRO \
 -DACL_WRITEABLE_CHECK \
