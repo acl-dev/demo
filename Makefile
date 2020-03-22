@@ -50,6 +50,7 @@ all: fiber_demo \
 	thread_cond \
 	thread_echod \
 	http_request \
+	http_pool \
 	http_manager \
 	mysql \
 	mysql_pool \
@@ -79,6 +80,7 @@ clean cl:
 		$(BIN)/thread_cond \
 		$(BIN)/thread_echod \
 		$(BIN)/http_request \
+		$(BIN)/http_pool \
 		$(BIN)/http_manager \
 		$(BIN)/mysql \
 		$(BIN)/mysql_pool \
@@ -151,6 +153,8 @@ thread/thread_echod.o: thread/thread_echod.cpp
 
 http_request: http/http_request.o
 	g++ http/http_request.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_request
+http_pool: http/http_pool.o
+	g++ http/http_pool.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_pool
 http/http_request.o: http/http_request.cpp
 	g++ $(CFLAGS) http/http_request.cpp -o http/http_request.o
 
