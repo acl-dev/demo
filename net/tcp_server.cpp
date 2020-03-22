@@ -5,10 +5,12 @@ static void echo(acl::socket_stream& conn)
 	char buf[8192];
 	while (true) {
 		int ret = conn.read(buf, sizeof(buf), false);
-		if (ret == -1)
+		if (ret == -1) {
 			break;
-		if (conn.write(buf, ret) == -1)
+		}
+		if (conn.write(buf, ret) == -1) {
 			break;
+		}
 	}
 }
 

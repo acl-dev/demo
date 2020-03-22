@@ -12,15 +12,13 @@ int main(void)
 		.add_param("tn", "monline_4_dg")
 		.add_param("wd", "freebsd");
 
-	if (req.request(NULL, 0) == false)
-	{
+	if (!req.request(NULL, 0)) {
 		printf("request error!\r\n");
 		return 1;
 	}
 
 	acl::string body;
-	if (req.get_body(body) == false)
-	{
+	if (!req.get_body(body)) {
 		printf("get_body error!\r\n");
 		return 1;
 	}
