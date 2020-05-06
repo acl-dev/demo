@@ -44,6 +44,8 @@ all: fiber_demo \
 	connect \
 	tcp_server \
 	gethostbyname \
+	nio_client \
+	nio_server \
 	thread_demo \
 	thread_pool \
 	thread_mbox \
@@ -74,6 +76,8 @@ clean cl:
 		$(BIN)/connect \
 		$(BIN)/tcp_server \
 		$(BIN)/gethostbyname \
+		$(BIN)/nio_client \
+		$(BIN)/nio_server \
 		$(BIN)/thread_demo \
 		$(BIN)/thread_pool \
 		$(BIN)/thread_mbox \
@@ -125,6 +129,16 @@ gethostbyname: net/gethostbyname.o
 	g++ net/gethostbyname.o -lacl_all -lpthread -o $(BIN)/gethostbyname
 net/gethostbyname.o: net/gethostbyname.cpp
 	g++ $(CFLAGS) net/gethostbyname.cpp -o net/gethostbyname.o
+
+nio_client: nio/nio_client.o
+	g++ nio/nio_client.o -lacl_all -lpthread -o $(BIN)/nio_client
+nio/nio_client.o: nio/nio_client.cpp
+	g++ $(CFLAGS) nio/nio_client.cpp -o nio/nio_client.o
+
+nio_server: nio/nio_server.o
+	g++ nio/nio_server.o -lacl_all -lpthread -o $(BIN)/nio_server
+nio/nio_server.o: nio/nio_server.cpp
+	g++ $(CFLAGS) nio/nio_server.cpp -o nio/nio_server.o
 
 thread_demo: thread/thread_demo.o
 	g++ thread/thread_demo.o -lacl_all -ldl -lz -lpthread -o $(BIN)/thread_demo
