@@ -37,8 +37,7 @@ private:
 
 class server_accept_callback : public acl::aio_accept_callback {
 public:
-	server_accept_callback(acl::aio_listen_stream& listener)
-	: listener_(listener) {}
+	server_accept_callback(void) {}
 	~server_accept_callback(void) {}
 
 protected:
@@ -52,9 +51,6 @@ protected:
 		conn->read();
 		return true;
 	}
-
-private:
-	acl::aio_listen_stream& listener_;
 };
 
 static void usage(const char* procname) {
@@ -105,7 +101,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("listen on %s ok\r\n", listen_addr.c_str());
 
-	server_accept_callback callback(*listener);
+	server_accept_callback callback;
 	listener->add_accept_callback(&callback);
 
 	while (handle.check()) {}

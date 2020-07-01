@@ -37,6 +37,7 @@ ifeq ($(findstring Linux, $(OSNAME)), Linux)
 endif
 
 BIN=bin
+$(shell mkdir -p $(BIN))
 
 all: fiber_demo \
 	tbox \
