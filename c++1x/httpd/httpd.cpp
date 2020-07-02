@@ -32,15 +32,22 @@ int main(int argc, char* argv[]) {
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);
 
+	const char* addr = "0.0.0.0|8194";
+	const char* conf = argc >= 2 ? argv[1] : "./httpd.cf";
+
+	if (access(conf, R_OK) == -1) {
+		conf = NULL;
+	}
+
 	acl::http_server server;
 
-	// set the configure variables
+	// call the methods in acl::master_base class
 	server.set_cfg_int(var_conf_int_tab)
 		.set_cfg_int64(NULL)
 		.set_cfg_str(var_conf_str_tab)
 		.set_cfg_bool(var_conf_bool_tab);
 
-	// set process running status callback
+	// call the methods in acl::http_server
 	server.before_proc_jail([] {
 		printf("---> before process jail\r\n");
 	}).on_proc_init([] {
@@ -60,10 +67,7 @@ int main(int argc, char* argv[]) {
 		printf("---> thread-%lu on accept %d\r\n",
 			acl::thread::self(), conn.sock_handle());
 		return true;
-	});
-
-	// set http route
-	server.Get("/", [](acl::HttpRequest&, acl::HttpResponse& res) {
+	}).Get("/", [](acl::HttpRequest&, acl::HttpResponse& res) {
 		acl::string buf("hello world1!\r\n");
 		res.setContentLength(buf.size());
 		return res.write(buf.c_str(), buf.size());
@@ -83,18 +87,8 @@ int main(int argc, char* argv[]) {
 					.add_bool("success", true)
 					.add_number("number", 200));
 		return res.write(json);
-	}).Get("/test", http_test);
-
-	// start the server in alone mode
-	const char* addr = "0.0.0.0|8194";
-	const char* conf = argc >= 2 ? argv[1] : "./httpd.cf";
-
-	if (access(conf, R_OK) == -1) {
-		conf = NULL;
-	}
-
-	// run in alone mode
-	server.run_alone(addr, conf);
+	}).Get("/test", http_test)
+	.run_alone(addr, conf);
 
 	return 0;
 }
