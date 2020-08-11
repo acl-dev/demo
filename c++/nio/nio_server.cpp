@@ -4,6 +4,28 @@
 #include <string.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
+class mytimer : public acl::aio_timer_callback {
+public:
+	mytimer(acl::aio_handle& handle) : handle_(handle) {}
+
+protected:
+	// @override
+	void timer_callback(unsigned int) {
+		printf("del mytimer now\r\n");
+		handle_.del_timer(this);
+	}
+
+	// @override
+	void destroy(void) {
+		printf("mytimer will be deleted\r\n");
+		delete this;
+	}
+
+private:
+	acl::aio_handle& handle_;
+	~mytimer(void) {}
+};
+
 class client_read_callback : public acl::aio_callback {
 public:
 	client_read_callback(acl::aio_socket_stream* conn) : conn_(conn) {}
@@ -37,7 +59,7 @@ private:
 
 class server_accept_callback : public acl::aio_accept_callback {
 public:
-	server_accept_callback(void) {}
+	server_accept_callback(acl::aio_handle& handle) : handle_(handle) {}
 	~server_accept_callback(void) {}
 
 protected:
@@ -49,8 +71,15 @@ protected:
 		conn->add_close_callback(handler);
 		conn->add_read_callback(handler);
 		conn->read();
+
+		mytimer* timer = new mytimer(handle_);
+		timer->keep_timer(true);
+		handle_.set_timer(timer, 1000000, 0);
 		return true;
 	}
+
+private:
+	acl::aio_handle& handle_;
 };
 
 static void usage(const char* procname) {
@@ -101,7 +130,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("listen on %s ok\r\n", listen_addr.c_str());
 
-	server_accept_callback callback;
+	server_accept_callback callback(handle);
 	listener->add_accept_callback(&callback);
 
 	while (handle.check()) {}
