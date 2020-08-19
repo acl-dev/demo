@@ -24,6 +24,5 @@ int main(void)
 	}
 
 	printf("%s\r\n", body.c_str());
-
 	return 0;
 }

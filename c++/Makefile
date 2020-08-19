@@ -53,6 +53,7 @@ all: fiber_demo \
 	thread_cond \
 	thread_echod \
 	http_get \
+	http_post \
 	http_pool \
 	http_manager \
 	mysql \
@@ -85,6 +86,7 @@ clean cl:
 		$(BIN)/thread_cond \
 		$(BIN)/thread_echod \
 		$(BIN)/http_get \
+		$(BIN)/http_post \
 		$(BIN)/http_pool \
 		$(BIN)/http_manager \
 		$(BIN)/mysql \
@@ -170,6 +172,11 @@ http_get: http/http_get.o
 	g++ http/http_get.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_get
 http/http_get.o: http/http_get.cpp
 	g++ $(CFLAGS) http/http_get.cpp -o http/http_get.o
+
+http_post: http/http_post.o
+	g++ http/http_post.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_post
+http/http_post.o: http/http_post.cpp
+	g++ $(CFLAGS) http/http_post.cpp -o http/http_post.o
 
 http_pool: http/http_pool.o
 	g++ http/http_pool.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_pool
