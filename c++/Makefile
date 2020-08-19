@@ -39,7 +39,7 @@ endif
 BIN=bin
 $(shell mkdir -p $(BIN))
 
-all: fiber_demo \
+all:	h2b \
 	tbox \
 	file_lock \
 	connect \
@@ -73,7 +73,8 @@ all: fiber_demo \
 	master_threads_echod
 
 clean cl:
-	@(rm -f	$(BIN)/tbox \
+	@(rm -f	$(BIN)/h2b \
+		$(BIN)/tbox \
 		$(BIN)/file_lock \
 		$(BIN)/connect \
 		$(BIN)/tcp_server \
@@ -107,6 +108,11 @@ clean cl:
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
+
+h2b: string/h2b.o
+	g++ string/h2b.o -lacl_all -ldl -lz -lpthread -o $(BIN)/h2b
+string/h2b.o: string/h2b.cpp
+	g++ $(CFLAGS) string/h2b.cpp -o string/h2b.o
 
 tbox: common/tbox.o
 	g++ common/tbox.o -lacl_all -ldl -lz -lpthread -o $(BIN)/tbox
