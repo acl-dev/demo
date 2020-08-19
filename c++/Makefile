@@ -52,7 +52,7 @@ all: fiber_demo \
 	thread_mbox \
 	thread_cond \
 	thread_echod \
-	http_request \
+	http_get \
 	http_pool \
 	http_manager \
 	mysql \
@@ -84,7 +84,7 @@ clean cl:
 		$(BIN)/thread_mbox \
 		$(BIN)/thread_cond \
 		$(BIN)/thread_echod \
-		$(BIN)/http_request \
+		$(BIN)/http_get \
 		$(BIN)/http_pool \
 		$(BIN)/http_manager \
 		$(BIN)/mysql \
@@ -166,12 +166,15 @@ thread_echod: thread/thread_echod.o
 thread/thread_echod.o: thread/thread_echod.cpp
 	g++ $(CFLAGS) thread/thread_echod.cpp -o thread/thread_echod.o
 
-http_request: http/http_request.o
-	g++ http/http_request.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_request
+http_get: http/http_get.o
+	g++ http/http_get.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_get
+http/http_get.o: http/http_get.cpp
+	g++ $(CFLAGS) http/http_get.cpp -o http/http_get.o
+
 http_pool: http/http_pool.o
 	g++ http/http_pool.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_pool
-http/http_request.o: http/http_request.cpp
-	g++ $(CFLAGS) http/http_request.cpp -o http/http_request.o
+http/http_pool.o: http/http_pool.cpp
+	g++ $(CFLAGS) http/http_pool.cpp -o http/http_pool.o
 
 http_manager: http/http_manager.o
 	g++ http/http_manager.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_manager
