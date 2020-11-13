@@ -39,13 +39,18 @@ endif
 BIN=bin
 $(shell mkdir -p $(BIN))
 
-all: vstring_base64
+all: vstring_base64 gethostbyname
 
 clean cl:
-	@(rm -f $(BIN)/vstring_base64)
+	@(rm -f $(BIN)/*)
 	@(rm -f */*.o)
 
 vstring_base64: code/vstring_base64.o
 	gcc code/vstring_base64.o -lacl_all $(ldflags) -o $(BIN)/vstring_base64
 code/vstring_base64.o: code/vstring_base64.c
 	gcc $(CFLAGS) code/vstring_base64.c -o code/vstring_base64.o
+
+gethostbyname: net/gethostbyname.o
+	gcc net/gethostbyname.c -lacl_all $(ldflags) -o $(BIN)/gethostbyname
+net/gethostbyname.o: net/gethostbyname.c
+	gcc $(CFLAGS) net/gethostbyname.c -o net/gethostbyname.o
