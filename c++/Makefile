@@ -62,6 +62,7 @@ all:	h2b \
 	redis_hash \
 	redis_thread \
 	redis_set \
+	redis_pipeline \
 	fiber_demo \
 	fiber_echod \
 	fiber_mutex \
@@ -96,6 +97,7 @@ clean cl:
 		$(BIN)/redis_hash \
 		$(BIN)/redis_thread \
 		$(BIN)/redis_set \
+		$(BIN)/redis_pipeline \
 		$(BIN)/fiber_demo \
 		$(BIN)/fiber_echod \
 		$(BIN)/fiber_mutex \
@@ -223,6 +225,11 @@ redis_set: redis/redis_set.o
 	g++ redis/redis_set.o -lacl_all -ldl -lz -lpthread -o $(BIN)/redis_set
 redis/redis_set.o: redis/redis_set.cpp
 	g++ $(CFLAGS) redis/redis_set.cpp -o redis/redis_set.o
+
+redis_pipeline: redis/redis_pipeline.o
+	g++ redis/redis_pipeline.o -lacl_all -ldl -lz -lpthread -o $(BIN)/redis_pipeline
+redis/redis_pipeline.o: redis/redis_pipeline.cpp
+	g++ $(CFLAGS) redis/redis_pipeline.cpp -o redis/redis_pipeline.o
 
 fiber_demo: fiber/fiber_demo.o
 	g++ fiber/fiber_demo.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_demo
