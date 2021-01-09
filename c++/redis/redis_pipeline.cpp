@@ -1,15 +1,13 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class redis_thread : public acl::thread
-{
+class redis_thread : public acl::thread {
 public:
 	redis_thread(acl::redis_client_pipeline& pipeline) : pipeline_(pipeline) {}
 	~redis_thread(void) {}
 
 protected:
 	// @override
-	void* run(void)
-	{
+	void* run(void) {
 		acl::string key;
 		acl::redis cmd(&pipeline_);
 		cmd.set_pipeline(&pipeline_);
@@ -30,8 +28,7 @@ private:
 	acl::redis_client_pipeline& pipeline_;
 };
 
-int main(void)
-{
+int main(void) {
 	acl::redis_client_pipeline pipeline("127.0.0.1:9001");
 	pipeline.start_thread();
 
