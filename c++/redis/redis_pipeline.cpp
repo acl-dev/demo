@@ -29,7 +29,7 @@ private:
 };
 
 int main(void) {
-	acl::redis_client_pipeline pipeline("127.0.0.1:9001");
+	acl::redis_client_pipeline pipeline("127.0.0.1:6379");
 	pipeline.start_thread();
 
 	std::vector<acl::thread*> threads;
