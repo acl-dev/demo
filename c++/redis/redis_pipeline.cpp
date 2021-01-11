@@ -8,11 +8,25 @@ public:
 protected:
 	// @override
 	void* run(void) {
-		acl::string key;
+		acl::string key, value;
 		acl::redis cmd(&pipeline_);
 		cmd.set_pipeline(&pipeline_);
+
 		for (int i = 0; i < 10000; i++) {
-			key.format("key-%lu-%d", this->thread_id(), i);
+			key.format("key-%lu-%d", acl::thread::self(), i);
+			value.format("val-%lu-%d", acl::thread::self(), i);
+			if (!cmd.set(key, value)) {
+				printf("set %s error, %s\r\n",
+					key.c_str(), cmd.result_error());
+				break;
+			}
+
+			if (!cmd.get(key, value)) {
+				printf("get %s error, %s\r\n",
+					key.c_str(), cmd.result_error());
+				break;
+			}
+
 			if (cmd.del(key) < 0) {
 				printf("del %s error: %s\r\n",
 					key.c_str(), cmd.result_error());
@@ -29,7 +43,8 @@ private:
 };
 
 int main(void) {
-	acl::redis_client_pipeline pipeline("127.0.0.1:6379");
+	acl::redis_client_pipeline pipeline("10.110.28.210:9001");
+	pipeline.set_password("Wabjtam123");
 	pipeline.start_thread();
 
 	std::vector<acl::thread*> threads;
