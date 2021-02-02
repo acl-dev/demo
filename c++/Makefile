@@ -83,6 +83,8 @@ clean cl:
 		$(BIN)/gethostbyname \
 		$(BIN)/nio_client \
 		$(BIN)/nio_server \
+		$(BIN)/epoll_client \
+		$(BIN)/epoll_server \
 		$(BIN)/thread_demo \
 		$(BIN)/thread_pool \
 		$(BIN)/thread_mbox \
@@ -152,6 +154,26 @@ nio_server: nio/nio_server.o
 	g++ nio/nio_server.o -lacl_all -lpthread -o $(BIN)/nio_server
 nio/nio_server.o: nio/nio_server.cpp
 	g++ $(CFLAGS) nio/nio_server.cpp -o nio/nio_server.o
+
+poll: event/poll.o
+	g++ event/poll.o -lacl_all -lpthread -o $(BIN)/poll
+event/poll.o: event/poll.cpp
+	g++ $(CFLAGS) event/poll.cpp -o event/poll.o
+
+poll_server: event/poll_server.o
+	g++ event/poll_server.o -lacl_all -lpthread -o $(BIN)/poll_server
+event/poll_server.o: event/poll_server.cpp
+	g++ $(CFLAGS) event/poll_server.cpp -o event/poll_server.o
+
+epoll_client: event/epoll_client.o
+	g++ event/epoll_client.o -lacl_all -lpthread -o $(BIN)/epoll_client
+event/epoll_client.o: event/epoll_client.cpp
+	g++ $(CFLAGS) event/epoll_client.cpp -o event/epoll_client.o
+
+epoll_server: event/epoll_server.o
+	g++ event/epoll_server.o -lacl_all -lpthread -o $(BIN)/epoll_server
+event/epoll_server.o: event/epoll_server.cpp
+	g++ $(CFLAGS) event/epoll_server.cpp -o event/epoll_server.o
 
 thread_demo: thread/thread_demo.o
 	g++ thread/thread_demo.o -lacl_all -ldl -lz -lpthread -o $(BIN)/thread_demo
