@@ -22,7 +22,7 @@ private:
 
 class epoll_server : public acl::thread {
 public:
-	epoll_server(int lfd);
+	epoll_server(int lfd, int nthreads);
 
 	void epoll_relisten(int fd);
 
@@ -49,18 +49,18 @@ private:
 	acl::thread_mutex lock_;
 };
 
-epoll_server::epoll_server(int lfd)
+epoll_server::epoll_server(int lfd, int nthreads)
 : lfd_(lfd)
 {
 	threads_.set_idle(120);
-	threads_.set_limit(100);
+	threads_.set_limit(nthreads);
 	threads_.set_stacksize(256000);
 
 	epfd_ = epoll_create(1024);
 
 	// init listen fd
 	acl_non_blocking(lfd_, ACL_NON_BLOCKING);
-	epoll_add_read(lfd_, false);
+	epoll_add_read(lfd_, true);
 }
 
 epoll_server::~epoll_server(void) {
@@ -97,6 +97,7 @@ void* epoll_server::run(void) {
 
 void epoll_server::handle_accept(int lfd) {
 	int fd = accept(lfd, NULL, NULL);
+
 	if (fd >= FD_SETSIZE) {
 		printf("too large cfd=%d\r\n", fd);
 		close(fd);
@@ -104,6 +105,8 @@ void epoll_server::handle_accept(int lfd) {
 		acl_non_blocking(fd, ACL_NON_BLOCKING);
 		epoll_add_read(fd, true);
 	}
+
+	epoll_relisten(lfd);
 }
 
 processor *epoll_server::peek(void) {
@@ -225,10 +228,10 @@ static void usage(const char* procname) {
 
 int main(int argc, char* argv[]) {
 	acl::string addr("127.0.0.1|8887");
-	int  ch, nthreads = 1;
+	int  ch, nthreads = 1, threads_pool = 4;
 
 	signal(SIGPIPE, SIG_IGN);
-	while ((ch = getopt(argc, argv, "hc:s:")) > 0) {
+	while ((ch = getopt(argc, argv, "hc:s:t:")) > 0) {
 		switch (ch) {
 		case 'h':
 			usage(argv[0]);
@@ -238,6 +241,9 @@ int main(int argc, char* argv[]) {
 			break;
 		case 'c':
 			nthreads = atoi(optarg);
+			break;
+		case 't':
+			threads_pool = atoi(optarg);
 			break;
 		default:
 			break;
@@ -254,7 +260,8 @@ int main(int argc, char* argv[]) {
 	std::vector<acl::thread*> threads;
 
 	for (int i = 0; i < nthreads; i++) {
-		acl::thread* thr = new epoll_server(ss.sock_handle());
+		acl::thread* thr = new
+			epoll_server(ss.sock_handle(), threads_pool);
 		thr->set_detachable(false);
 		threads.push_back(thr);
 		thr->start();
