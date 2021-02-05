@@ -70,7 +70,7 @@ epoll_server::~epoll_server(void) {
 void* epoll_server::run(void) {
 	threads_.start();
 
-#define	MAX 1024
+#define	MAX 128
 
 	struct epoll_event events[MAX];
 
@@ -137,7 +137,7 @@ void epoll_server::epoll_add_read(int fd, bool oneshot) {
 	memset(&ev, 0, sizeof(ev));
 	ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
 	if (oneshot) {
-		ev.events |= EPOLLONESHOT;
+		ev.events |= EPOLLONESHOT | EPOLLET;
 	}
 	ev.data.fd = fd;
 
