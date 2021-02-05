@@ -2,14 +2,16 @@
 #include <sys/epoll.h>
 #include <acl-lib/acl/lib_acl.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
+#include <acl-lib/fiber/libfiber.hpp>
 
 class epoll_server;
 
-class processor : public acl::thread_job {
+class processor {
 public:
 	processor(epoll_server *handle);
+
 	void bind(int fd);
-	void *run();
+	void run();
 
 private:
 	int fd_;
@@ -18,15 +20,43 @@ private:
 	int handle_client_read();
 };
 
+class worker : public acl::thread {
+public:
+	worker(void) {}
+	~worker(void) {}
+
+	void push(processor *job) {
+		box_.push(job, false);
+	}
+
+protected:
+	// @override
+	void* run(void) {
+		bool found;
+		while (true) {
+			processor *job = box_.pop(-1, &found);
+			if (job) {
+				job->run();
+			} else if (found) {
+				break;
+			}
+		}
+		return NULL;
+	}
+
+private:
+	acl::fiber_tbox<processor> box_;
+};
+
 class epoll_server : public acl::thread {
 public:
 	epoll_server(int lfd, int nthreads);
 
-	void epoll_relisten(int fd);
 	void *run(void);
 
+	void epoll_relisten(int fd);
 	void release(processor* job);
-	processor *peek(void);
+	processor* peek(void);
 
 private:
 	~epoll_server(void);
@@ -39,17 +69,21 @@ private:
 	int  lfd_;
 	int  epfd_;
 
-	acl::thread_pool threads_;
+	std::vector<worker*> threads_;
+	size_t next_;
 	std::vector<processor*> jobs_;
 	acl::thread_mutex lock_;
 };
 
 epoll_server::epoll_server(int lfd, int nthreads)
 : lfd_(lfd)
+, next_(0)
 {
-	threads_.set_idle(120);
-	threads_.set_limit(nthreads);
-	threads_.set_stacksize(256000);
+	for (int i = 0; i < nthreads; i++) {
+		worker *wk = new worker;
+		threads_.push_back(wk);
+		wk->start();
+	}
 
 	epfd_ = epoll_create(1024);
 
@@ -59,12 +93,15 @@ epoll_server::epoll_server(int lfd, int nthreads)
 }
 
 epoll_server::~epoll_server(void) {
+	for (std::vector<worker*>::iterator it = threads_.begin();
+		it != threads_.end(); ++it) {
+		(*it)->wait(NULL);
+		delete *it;
+	}
 	close(epfd_);
 }
 
 void* epoll_server::run(void) {
-	threads_.start();
-
 #define	MAX 128
 
 	struct epoll_event events[MAX];
@@ -126,7 +163,9 @@ void epoll_server::release(processor *job) {
 void epoll_server::handle_client(int fd) {
 	processor *job = peek();
 	job->bind(fd);
-	threads_.execute(job);
+
+	size_t i = next_++ % threads_.size();
+	threads_[i]->push(job);
 }
 
 void epoll_server::epoll_add_read(int fd, bool oneshot) {
@@ -166,7 +205,7 @@ void processor::bind(int fd) {
 	fd_ = fd;
 }
 
-void *processor::run() {
+void processor::run() {
 	assert(fd_ >= 0);
 
 	while (true) {
@@ -181,7 +220,6 @@ void *processor::run() {
 	}
 
 	handle_->release(this);
-	return NULL;
 }
 
 int processor::handle_client_read() {

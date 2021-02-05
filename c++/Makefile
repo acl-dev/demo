@@ -183,6 +183,11 @@ epoll: event/epoll.o
 event/epoll.o: event/epoll.cpp
 	g++ $(CFLAGS) event/epoll.cpp -o event/epoll.o
 
+epoll2: event/epoll2.o
+	g++ event/epoll2.o -lfiber_cpp -lacl_all -lfiber -lpthread -ldl -o $(BIN)/epoll2
+event/epoll2.o: event/epoll2.cpp
+	g++ $(CFLAGS) event/epoll2.cpp -o event/epoll2.o
+
 epoll_client: event/epoll_client.o
 	g++ event/epoll_client.o -lacl_all -lpthread -o $(BIN)/epoll_client
 event/epoll_client.o: event/epoll_client.cpp
