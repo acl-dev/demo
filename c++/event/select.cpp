@@ -52,7 +52,6 @@ private:
 				continue;
 			}
 
-
 			for (int i = 0; i < fds_count_; i++) {
 				if (!FD_ISSET(fds_[i], &rset_)) {
 					continue;
