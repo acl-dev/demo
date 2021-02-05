@@ -1,37 +1,50 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/select.h>
 #include <acl-lib/acl/lib_acl.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
-#include <signal.h>
 
 #define	MAX_FD	100000
 
-class poll_thread : public acl::thread {
+class select_thread : public acl::thread {
 public:
-	poll_thread(int lfd)
+	select_thread(int lfd)
 	: lfd_(lfd)
 	{
+		fd_max_    = lfd_;
 		fds_count_ = 0;
-		fds_       = new pollfd[MAX_FD];
-		fds_map_   = new ssize_t[MAX_FD];
+		fds_       = new int[MAX_FD];
+		fds_map_   = new int[MAX_FD];
+		FD_ZERO(&rset_);
+
 		for (ssize_t i = 0; i < MAX_FD; i++) {
+			fds_[i] = -1;
 			fds_map_[i] = -1;
 		}
 
 		acl_non_blocking(lfd_, ACL_NON_BLOCKING);
-		poll_add_read(lfd_);
+		select_add_read(lfd_);
 	}
 
 private:
-	~poll_thread(void) {
+	~select_thread(void) {
 		delete [] fds_;
 		delete [] fds_map_;
 	}
 
 	// @override
 	void* run(void) {
-		int timeout = 100;
-
 		while (true) {
-			int nfds = poll(fds_, (nfds_t) fds_count_, timeout);
+			fd_set rset = rset_;
+			struct timeval tv;
+			tv.tv_sec  = 1;
+			tv.tv_usec = 0;
+
+			int nfds = select(fd_max_ + 1, &rset, NULL, NULL, &tv);
 			if (nfds == -1) {
 				printf("wait error %s\r\n", acl::last_serror());
 				exit (1);
@@ -39,18 +52,17 @@ private:
 				continue;
 			}
 
-#define	POLL_EVENT (POLLIN | POLLERR | POLLHUP)
+
 			for (int i = 0; i < fds_count_; i++) {
-				if ((fds_[i].revents & POLL_EVENT) == 0) {
+				if (!FD_ISSET(fds_[i], &rset_)) {
 					continue;
 				}
-				int fd = fds_[i].fd;
+				int fd = fds_[i];
 				if (fd == lfd_) {
 					handle_accept(fd);
 				} else {
 					handle_client(fd);
 				}
-				fds_[i].revents = 0;
 			}
 		}
 
@@ -58,13 +70,24 @@ private:
 	}
 
 	void handle_accept(int lfd) {
-		int cfd = accept(lfd, NULL, NULL);
-		if (cfd >= MAX_FD) {
-			printf("too large cfd=%d\r\n", cfd);
-			close(cfd);
-		} else if (cfd >= 0) {
-			acl_non_blocking(cfd, ACL_NON_BLOCKING);
-			poll_add_read(cfd);
+		while (true) {
+			int cfd = accept(lfd, NULL, NULL);
+			if (cfd >= MAX_FD) {
+				printf("too large cfd=%d\r\n", cfd);
+				close(cfd);
+			} else if (cfd >= 0) {
+				acl_non_blocking(cfd, ACL_NON_BLOCKING);
+				select_add_read(cfd);
+#if EAGAIN == EWOULDBLOCK
+			} else if (errno == EAGAIN) {
+#else
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+#endif
+				break;
+			} else {
+				printf("accept error: %s\r\n", acl::last_serror());
+				break;
+			}
 		}
 	}
 
@@ -74,7 +97,7 @@ private:
 			if (ret == 0) {
 				break;
 			} else if (ret == -1) {
-				poll_del_read(cfd);
+				select_del_read(cfd);
 				close(cfd);
 				break;
 			}
@@ -83,7 +106,7 @@ private:
 
 	int handle_client_read(int fd) {
 		char buf[4096];
-		int ret;
+		ssize_t ret;
 
 		if ((ret = read(fd, buf, sizeof(buf) - 1)) == 0) {
 			return -1;
@@ -98,7 +121,7 @@ private:
 			printf("thread-%lu gets error %s\r\n",
 				acl::thread::self(), acl::last_serror());
 			return -1;
-		} else if (write(fd, buf, ret) != ret) {
+		} else if (write(fd, buf, (size_t) ret) != ret) {
 			// xxx: fixed me
 			printf("thread-%lu write error %s\r\n",
 				acl::thread::self(), acl::last_serror());
@@ -113,31 +136,37 @@ private:
 	}
 
 private:
-	void poll_add_read(int fd) {
-		fds_[fds_count_].fd = fd;
-		fds_[fds_count_].events = POLLIN | POLLERR | POLLHUP;
-		fds_[fds_count_].revents = 0;
+	void select_add_read(int fd) {
+		fds_[fds_count_] = fd;
+		FD_SET(fd, &rset_);
 		fds_map_[fd] = fds_count_;
 		fds_count_++;
+		if (fd > fd_max_) {
+			fd_max_ = fd;
+		}
 	}
 
-	void poll_del_read(int fd) {
-		ssize_t pos = fds_map_[fd];
-		assert(pos >= 0);
-
-		if (pos == -- fds_count_) {
+	void select_del_read(int fd) {
+		int pos = fds_map_[fd];
+		FD_CLR(fd, &rset_);
+		if (pos == --fds_count_) {
 			fds_map_[fd] = -1;
 		} else {
 			fds_[pos] = fds_[fds_count_];
-			fds_map_[fds_[pos].fd] = pos;
+			fds_map_[fds_[pos]] = pos;
+		}
+		if (fd == fd_max_) {
+			--fd_max_;
 		}
 	}
 
 private:
-	struct pollfd* fds_;
-	ssize_t* fds_map_;
-	ssize_t fds_count_;
-	int lfd_;
+	fd_set rset_;
+	int* fds_;
+	int* fds_map_;
+	int  fd_max_;
+	int  fds_count_;
+	int  lfd_;
 };
 
 static void usage(const char* procname) {
@@ -165,7 +194,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	acl::server_socket ss(127, false);
+	acl::server_socket ss(128, false);
 	if (ss.open(addr) == false) {
 		printf("open %s error %s\r\n", addr.c_str(), acl::last_serror());
 		return 1;
@@ -175,7 +204,7 @@ int main(int argc, char* argv[]) {
 	std::vector<acl::thread*> threads;
 
 	for (int i = 0; i < nthreads; i++) {
-		acl::thread* thr = new poll_thread(ss.sock_handle());
+		acl::thread* thr = new select_thread(ss.sock_handle());
 		thr->set_detachable(false);
 		threads.push_back(thr);
 		thr->start();

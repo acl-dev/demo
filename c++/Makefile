@@ -83,6 +83,9 @@ clean cl:
 		$(BIN)/gethostbyname \
 		$(BIN)/nio_client \
 		$(BIN)/nio_server \
+		$(BIN)/select \
+		$(BIN)/poll \
+		$(BIN)/poll_server \
 		$(BIN)/epoll_client \
 		$(BIN)/epoll_server \
 		$(BIN)/thread_demo \
@@ -154,6 +157,11 @@ nio_server: nio/nio_server.o
 	g++ nio/nio_server.o -lacl_all -lpthread -o $(BIN)/nio_server
 nio/nio_server.o: nio/nio_server.cpp
 	g++ $(CFLAGS) nio/nio_server.cpp -o nio/nio_server.o
+
+select: event/select.o
+	g++ event/select.o -lacl_all -lpthread -o $(BIN)/select
+event/select.o: event/select.cpp
+	g++ $(CFLAGS) event/select.cpp -o event/select.o
 
 poll: event/poll.o
 	g++ event/poll.o -lacl_all -lpthread -o $(BIN)/poll
