@@ -158,6 +158,11 @@ nio_server: nio/nio_server.o
 nio/nio_server.o: nio/nio_server.cpp
 	g++ $(CFLAGS) nio/nio_server.cpp -o nio/nio_server.o
 
+select2: event/select2.o
+	g++ event/select2.o -lacl_all -lpthread -o $(BIN)/select2
+event/select2.o: event/select2.cpp
+	g++ $(CFLAGS) event/select2.cpp -o event/select2.o
+
 select: event/select.o
 	g++ event/select.o -lacl_all -lpthread -o $(BIN)/select
 event/select.o: event/select.cpp
@@ -172,6 +177,11 @@ poll_server: event/poll_server.o
 	g++ event/poll_server.o -lacl_all -lpthread -o $(BIN)/poll_server
 event/poll_server.o: event/poll_server.cpp
 	g++ $(CFLAGS) event/poll_server.cpp -o event/poll_server.o
+
+epoll: event/epoll.o
+	g++ event/epoll.o -lacl_all -lpthread -o $(BIN)/epoll
+event/epoll.o: event/epoll.cpp
+	g++ $(CFLAGS) event/epoll.cpp -o event/epoll.o
 
 epoll_client: event/epoll_client.o
 	g++ event/epoll_client.o -lacl_all -lpthread -o $(BIN)/epoll_client

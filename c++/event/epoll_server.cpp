@@ -29,7 +29,7 @@ static void epoll_add_read(int epfd, int fd, void *ptr) {
 		ev.events |= EPOLLET;
 	}
 	if (__epoll_flag & EPOLL_ONESHOT) {
-		ev.events |= EPOLL_ONESHOT;
+		ev.events |= EPOLLONESHOT;
 	}
 	ev.data.ptr = ptr;
 	if (epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
@@ -223,5 +223,6 @@ int main(int argc, char* argv[]) {
 		delete *it;
 	}
 
+	close(epfd);
 	return 0;
 }
