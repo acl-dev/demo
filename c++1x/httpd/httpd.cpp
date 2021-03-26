@@ -76,6 +76,17 @@ int main(int argc, char* argv[]) {
 		req.getBody(buf);
 		res.setContentLength(buf.size());
 		return res.write(buf.c_str(), buf.size());
+	}).Post("/json", [](acl::HttpRequest& req, acl::HttpResponse& res) {
+		acl::json* json = req.getJson();
+		acl::string buf;
+
+		if (json) {
+			buf = json->to_string();
+		} else {
+			buf = "no json got\r\n";
+			res.setContentLength(buf.size());
+		}
+		return res.write(buf, buf.size());
 	}).Get("/json", [&](acl::HttpRequest&, acl::HttpResponse& res) {
 		acl::json json;
 		acl::json_node& root = json.get_root();
