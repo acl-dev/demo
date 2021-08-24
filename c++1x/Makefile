@@ -43,6 +43,7 @@ clean cl:
 	@(rm -f	$(BIN)/httpd)
 	@(rm -f $(BIN)/httpd.cf)
 	@(rm -f	$(BIN)/redis_thread)
+	@(rm -f	$(BIN)/redis_pipeline)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
