@@ -37,13 +37,14 @@ BIN=bin
 
 $(shell mkdir -p $(BIN) )
 
-all: httpd redis_thread redis_pipeline
+all: httpd redis_thread redis_pipeline fiber_echod
 
 clean cl:
 	@(rm -f	$(BIN)/httpd)
 	@(rm -f $(BIN)/httpd.cf)
 	@(rm -f	$(BIN)/redis_thread)
 	@(rm -f	$(BIN)/redis_pipeline)
+	@(rm -f $(BIN)/fiber_echod)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -63,3 +64,8 @@ redis_pipeline: redis/redis_pipeline.o
 	g++ redis/redis_pipeline.o -o $(BIN)/redis_pipeline $(ldflags)
 redis/redis_pipeline.o: redis/redis_pipeline.cpp
 	g++ $(CFLAGS) redis/redis_pipeline.cpp -o redis/redis_pipeline.o
+
+fiber_echod: fiber/fiber_echod.o
+	g++ fiber/fiber_echod.o -o $(BIN)/fiber_echod $(ldflags)
+fiber/fiber_echod.o: fiber/fiber_echod.cpp
+	g++ $(CFLAGS) fiber/fiber_echod.cpp -o fiber/fiber_echod.o
