@@ -93,10 +93,7 @@ void* epoll_server::run(void) {
 void epoll_server::handle_accept(int lfd) {
 	int fd = accept(lfd, NULL, NULL);
 
-	if (fd >= FD_SETSIZE) {
-		printf("too large cfd=%d\r\n", fd);
-		close(fd);
-	} else if (fd >= 0) {
+	if (fd >= 0) {
 		acl_non_blocking(fd, ACL_NON_BLOCKING);
 		epoll_add_read(fd, true);
 	}
