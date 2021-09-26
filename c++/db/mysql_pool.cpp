@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-static void tbl_select(acl::db_handle& db)
-{
+static void tbl_select(acl::db_handle& db) {
 	const char* username = "user1";
 	acl::query query;
 	query.create_sql("select nick from user_tbl where user=:user")
@@ -18,8 +17,7 @@ static void tbl_select(acl::db_handle& db)
 	}
 }
 
-static void tbl_select(acl::db_pool& dbpool)
-{
+static void tbl_select(acl::db_pool& dbpool) {
 	acl::db_guard guard(dbpool);
 	acl::db_handle* db = (acl::db_handle*) guard.peek();
 	if (db == NULL) {
@@ -30,8 +28,7 @@ static void tbl_select(acl::db_pool& dbpool)
 	tbl_select(*db);
 }
 
-int main(void)
-{
+int main(void) {
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);
 

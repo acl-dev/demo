@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class myobj
-{
+class myobj {
 public:
 	myobj(void) {}
 	~myobj(void) {}
@@ -9,8 +8,7 @@ public:
 
 static acl::atomic_long __curr_producer = 0;
 
-class producer : public acl::thread
-{
+class producer : public acl::thread {
 public:
 	producer(acl::tbox<myobj>& tbox, int max) : tbox_(tbox), max_(max) {}
 	~producer(void) {}
@@ -19,8 +17,7 @@ private:
 	acl::tbox<myobj>& tbox_;
 	int max_;
 
-	void* run(void)
-	{
+	void* run(void) {
 		for (int i = 0; i < max_; i++) {
 			myobj* o = new myobj;
 			(void) tbox_.push(o);
@@ -32,8 +29,7 @@ private:
 	}
 };
 
-class consumer : public acl::thread
-{
+class consumer : public acl::thread {
 public:
 	consumer(acl::tbox<myobj>& tbox, int nproducers)
 	: tbox_(tbox), nproducers_(nproducers) {}
@@ -43,8 +39,7 @@ private:
 	acl::tbox<myobj>& tbox_;
 	int nproducers_;
 
-	void* run(void)
-	{
+	void* run(void) {
 		int n = 0;
 		while (true) {
 			myobj* o = tbox_.pop(500);
@@ -61,8 +56,7 @@ private:
 	}
 };
 
-int main(void)
-{
+int main(void) {
 	int max = 10000000, max_producers = 2;
 	acl::tbox<myobj> tbox;
 

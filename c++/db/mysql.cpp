@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-static void tbl_select(acl::db_handle& db)
-{
+static void tbl_select(acl::db_handle& db) {
 	const char* username = "user1";
 	acl::query query;
 	query.create_sql("select nick from user_tbl where user=:user")
@@ -18,8 +17,7 @@ static void tbl_select(acl::db_handle& db)
 	}
 }
 
-static void tbl_delete(acl::db_handle& db)
-{
+static void tbl_delete(acl::db_handle& db) {
 	const char* username = "user1";
 	acl::query query;
 	query.create_sql("delete from user_tbl where user=:user")
@@ -30,8 +28,7 @@ static void tbl_delete(acl::db_handle& db)
 		printf("delete %s ok\r\n", username);
 }
 
-int main(void)
-{
+int main(void) {
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);
 

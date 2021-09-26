@@ -1,15 +1,13 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class mythread : public acl::thread
-{
+class mythread : public acl::thread {
 public:
 	mythread(acl::tbox<acl::string>& tbox) : buf_(NULL), tbox_(tbox) {}
 	~mythread(void) { delete buf_; }
 
 private:
 	// @override
-	void* run(void)
-	{
+	void* run(void) {
 		printf("hello world! thread-%lu\r\n", acl::thread::thread_self());
 		buf_ = new acl::string;
 		(*buf_) << "hello world: " << acl::thread::thread_self();
@@ -21,8 +19,7 @@ private:
 	acl::tbox<acl::string>& tbox_;
 };
 
-int main(void)
-{
+int main(void) {
 	std::vector<acl::thread*> threads;
 	acl::tbox<acl::string> tbox;
 

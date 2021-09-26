@@ -2,14 +2,12 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/libfiber.hpp>
 
-class myfiber : public acl::fiber
-{
+class myfiber : public acl::fiber {
 public:
 	myfiber(acl::fiber_mutex& lock) : lock_(lock) {}
 
 protected:
-	void run(void)
-	{
+	void run(void) {
 		for (int i = 0; i < 5; i++) {
 			lock_.lock();
 			printf("locked by fiber-%u and sleep\r\n",
@@ -27,8 +25,7 @@ private:
 	~myfiber(void) {}
 };
 
-int main(void)
-{
+int main(void) {
 	acl::fiber_mutex lock;
 
 	acl::fiber* fb1 = new myfiber(lock);

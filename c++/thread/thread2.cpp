@@ -17,8 +17,7 @@ private:
     acl::tbox<acl::thread>& box_;
 };
 
-int main(void)
-{
+int main(void) {
     acl::tbox<acl::thread> box;
     acl::thread* thread = new mythread(box);
     thread->set_detachable(true);

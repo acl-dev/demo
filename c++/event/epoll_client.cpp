@@ -13,16 +13,14 @@
 #include <unistd.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class client_thread : public acl::thread
-{
+class client_thread : public acl::thread {
 public:
 	client_thread(const char* addr, int nloop) : addr_(addr), nloop_(nloop) {}
 
 private:
 	~client_thread(void) {}
 
-	void* run(void)
-	{
+	void* run(void) {
 		if (conn_.open(addr_, 0, 0) == false) {
 			printf("open %s error %s\r\n",
 				addr_.c_str(), acl::last_serror());
@@ -58,22 +56,20 @@ private:
 	int nloop_;
 };
 
-static void usage(const char* procname)
-{
+static void usage(const char* procname) {
     printf("usage: %s -h [help] -s addr -c nthreads -n loop\r\n", procname);
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	int  ch;
 	acl::string addr("127.0.0.1:8887");
 	int  nthreads = 1, nloop = 10;
 
 	while ((ch = getopt(argc, argv, "c:s:n:h")) > 0) {
 		switch (ch) {
-        case 'h':
-            usage(argv[0]);
-            return 0;
+		case 'h':
+			usage(argv[0]);
+			return 0;
 		case 'c':
 			nthreads = atoi(optarg);
 			break;

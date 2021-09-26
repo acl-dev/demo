@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-static void echo(acl::socket_stream& conn)
-{
+static void echo(acl::socket_stream& conn) {
 	char buf[8192];
 	while (true) {
 		int ret = conn.read(buf, sizeof(buf), false);
@@ -14,8 +13,7 @@ static void echo(acl::socket_stream& conn)
 	}
 }
 
-int main(void)
-{
+int main(void) {
 	acl::acl_cpp_init();
 	acl::string addr("127.0.0.1:9206");
 	acl::log::stdout_open(true);

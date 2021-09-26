@@ -1,8 +1,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <unistd.h>
 
-int main(void)
-{
+int main(void) {
 	acl::redis_client_cluster cluster;
 	cluster.set("127.0.0.1:9001", 0);
 

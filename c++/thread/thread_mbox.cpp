@@ -1,22 +1,19 @@
 #include <unistd.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class myobj
-{
+class myobj {
 public:
 	myobj(void) {}
 	~myobj(void) {}
 
-	void run(void)
-	{
+	void run(void) {
 		printf("hello thread=%lu\r\n", acl::thread::thread_self());
 	}
 };
 
 #define MAX	100000000
 
-class producer : public acl::thread
-{
+class producer : public acl::thread {
 public:
 	producer(acl::mbox<myobj>& mbox) : mbox_(mbox) {}
 	~producer(void) {}
@@ -24,8 +21,7 @@ public:
 private:
 	acl::mbox<myobj>& mbox_;
 
-	void* run(void)
-	{
+	void* run(void) {
 		printf("producer: %lu\r\n", acl::thread::thread_self());
 		for (int i = 0; i < MAX; i++) {
 			myobj* o = new myobj;
@@ -36,8 +32,7 @@ private:
 	}
 };
 
-class consumer : public acl::thread
-{
+class consumer : public acl::thread {
 public:
 	consumer(acl::mbox<myobj>& mbox) : mbox_(mbox) {}
 	~consumer(void) {}
@@ -45,8 +40,7 @@ public:
 private:
 	acl::mbox<myobj>& mbox_;
 
-	void* run(void)
-	{
+	void* run(void) {
 		printf("consumer: %lu\r\n", acl::thread::thread_self());
 		sleep(1);
 		printf("wakeup\r\n");
@@ -62,8 +56,7 @@ private:
 	}
 };
 
-int main(void)
-{
+int main(void) {
 	acl::mbox<myobj> mbox;
 
 	producer producer(mbox);

@@ -1,8 +1,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/fiber.hpp>
 
-class fiber_client : public acl::fiber
-{
+class fiber_client : public acl::fiber {
 public:
 	fiber_client(acl::socket_stream* conn) : conn_(conn) {}
 
@@ -30,8 +29,7 @@ private:
 	~fiber_client(void) {}
 };
 
-class fiber_server : public acl::fiber
-{
+class fiber_server : public acl::fiber {
 public:
 	fiber_server(acl::server_socket& ss) : ss_(ss) {}
 	~fiber_server(void) {}
@@ -58,8 +56,7 @@ private:
 	acl::server_socket& ss_;
 };
 
-int main(void)
-{
+int main(void) {
 	acl::acl_cpp_init();
 	acl::string addr("127.0.0.1:9206");
 	acl::log::stdout_open(true);

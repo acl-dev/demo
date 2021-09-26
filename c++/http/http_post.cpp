@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-int main(void)
-{
+int main(void) {
 	acl::url_coder coder;
 	coder.set("name1", "value1")
 		.set("name2", "value2");

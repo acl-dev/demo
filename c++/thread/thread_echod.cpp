@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class thread_client : public acl::thread
-{
+class thread_client : public acl::thread {
 public:
 	thread_client(acl::socket_stream* conn) : conn_(conn) {}
 
@@ -30,8 +29,7 @@ private:
 	~thread_client(void) {}
 };
 
-class thread_server : public acl::thread
-{
+class thread_server : public acl::thread {
 public:
 	thread_server(acl::server_socket& ss) : ss_(ss) {}
 	~thread_server(void) {}
@@ -60,8 +58,7 @@ private:
 	acl::server_socket& ss_;
 };
 
-int main(void)
-{
+int main(void) {
 	acl::acl_cpp_init();
 	acl::string addr("127.0.0.1:9206");
 	acl::log::stdout_open(true);

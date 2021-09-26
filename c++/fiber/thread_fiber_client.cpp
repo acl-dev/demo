@@ -1,8 +1,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/lib_fiber.hpp>
 
-class producer_fiber : public acl::fiber
-{
+class producer_fiber : public acl::fiber {
 public:
 	producer_fiber(const char* addr, int count, int& nfibers)
 	: addr_(addr), count_(count), nfibers_(nfibers) {}
@@ -16,13 +15,13 @@ private:
 	int&  nfibers_;
 
 	// override
-	void run(void)
-	{
+	void run(void) {
 		int conn_timeout = 10, rw_timeout = 30;
 		acl::socket_stream conn;
 		if (conn.open(addr_, conn_timeout, rw_timeout) == false) {
-			if (--nfibers_ == 0)
+			if (--nfibers_ == 0) {
 				acl::fiber::schedule_stop();
+			}
 			delete this;
 			return;
 		}
@@ -46,14 +45,14 @@ private:
 			}
 		}
 
-		if (--nfibers_ == 0)
+		if (--nfibers_ == 0) {
 			acl::fiber::schedule_stop();
+		}
 		delete this;
 	}
 };
 
-class producer_thread : public acl::thread
-{
+class producer_thread : public acl::thread {
 public:
 	producer_thread(const char* addr, int count)
 	: addr_(addr), count_(count) {}
@@ -66,8 +65,7 @@ private:
 	int count_;
 
 	// override
-	void* run(void)
-	{
+	void* run(void) {
 		int nfibers = 100;
 
 		for (int i = 0; i < nfibers; i++) {
@@ -85,17 +83,19 @@ private:
 	}
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	acl::string addr("127.0.0.1:9001");
 	int nthreads = 2, count = 1000;
 
-	if (argc >= 2)
+	if (argc >= 2) {
 		addr = argv[1];
-	if (argc >= 3)
+	}
+	if (argc >= 3) {
 		nthreads = atoi(argv[2]);
-	if (argc >= 4)
+	}
+	if (argc >= 4) {
 		count = atoi(argv[3]);
+	}
 
 	std::vector<acl::thread*> threads;
 	for (int i = 0; i < nthreads; i++) {

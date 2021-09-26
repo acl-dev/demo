@@ -1,8 +1,7 @@
 #include <acl-lib/acl/lib_acl.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-int main(void)
-{
+int main(void) {
 	acl::log::stdout_open(true);
 	const char* addr = "127.0.0.1:9999";
 	int fd = acl_inet_listen(addr, 100, ACL_INET_FLAG_REUSEPORT);

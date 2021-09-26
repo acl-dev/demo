@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-int main(void)
-{
+int main(void) {
 	acl::redis_client_cluster conns;
 	conns.set("127.0.0.1:6379", 0);
 

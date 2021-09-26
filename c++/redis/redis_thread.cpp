@@ -1,15 +1,13 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class redis_thread : public acl::thread
-{
+class redis_thread : public acl::thread {
 public:
 	redis_thread(acl::redis_client_cluster& conns) : conns_(conns) {}
 	~redis_thread(void) {}
 
 protected:
 	// @override
-	void* run(void)
-	{
+	void* run(void) {
 		for (int i = 0; i < 1000; i++) {
 			acl::redis cmd(&conns_);
 			acl::string key, val;
@@ -28,8 +26,7 @@ private:
 	acl::redis_client_cluster& conns_;
 };
 
-int main(void)
-{
+int main(void) {
 	acl::redis_client_cluster conns;
 	conns.set("127.0.0.1:6379", 0);
 

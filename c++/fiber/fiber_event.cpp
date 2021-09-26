@@ -1,8 +1,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/libfiber.hpp>
 
-class myfiber : public acl::fiber
-{
+class myfiber : public acl::fiber {
 public:
 	myfiber(acl::fiber_event& event, unsigned long long& count)
 	: event_(event)
@@ -11,8 +10,7 @@ public:
 
 protected:
 	// @override
-	void run(void)
-	{
+	void run(void) {
 		for (int i = 0; i < 1000; i++) {
 			event_.wait();
 			count_++;
@@ -34,8 +32,7 @@ private:
 	~myfiber(void) {}
 };
 
-class mythread : public acl::thread
-{
+class mythread : public acl::thread {
 public:
 	mythread(acl::fiber_event& event, unsigned long long& count)
 	: event_(event)
@@ -46,8 +43,7 @@ public:
 
 protected:
 	// @override
-	void* run(void)
-	{
+	void* run(void) {
 		for (int i = 0; i < 1000; i++) {
 			acl::fiber* fb = new myfiber(event_, count_);
 			fb->start();
@@ -62,8 +58,7 @@ private:
 	unsigned long long& count_;
 };
 
-int main(void)
-{
+int main(void) {
 	unsigned long long count = 0;
 	acl::fiber_event event;
 

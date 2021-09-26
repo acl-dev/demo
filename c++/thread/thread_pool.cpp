@@ -1,15 +1,13 @@
 #include <unistd.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-class mythread : public acl::thread_job
-{
+class mythread : public acl::thread_job {
 public:
 	mythread(void) {}
 
 private:
 	// @override	
-	void* run(void)
-	{
+	void* run(void) {
 		printf("thread: %lu run\r\n", acl::thread::thread_self());
 		sleep(1);
 		printf("thread: %lu over\r\n", acl::thread::thread_self());
@@ -21,8 +19,7 @@ private:
 	~mythread(void) {}
 };
 
-int main(void)
-{
+int main(void) {
 	size_t max_threads = 2;
 	acl::thread_pool* threads = new acl::thread_pool;
 	threads->set_limit(max_threads);

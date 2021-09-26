@@ -1,8 +1,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/libfiber.hpp>
 
-class fiber_redis : public acl::fiber
-{
+class fiber_redis : public acl::fiber {
 public:
 	fiber_redis(acl::redis_client_cluster& cluster) : cluster_(cluster) {}
 private:
@@ -30,8 +29,7 @@ private:
 	}
 };
 
-int main(void)
-{
+int main(void) {
 	const char* redis_addr = "127.0.0.1:9000";
 	acl::redis_client_cluster cluster;
 	cluster.set(redis_addr, 0);

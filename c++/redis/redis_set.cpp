@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-int main(void)
-{
+int main(void) {
 	size_t max = 1000;
 
 	std::vector<acl::string> members;

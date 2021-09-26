@@ -1,27 +1,25 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/lib_fiber.hpp>
 
-class tcp_fiber : public acl::fiber
-{
+class tcp_fiber : public acl::fiber {
 public:
 	tcp_fiber(acl::socket_stream* conn) : conn_(conn) {}
 
 private:
 	acl::socket_stream* conn_;
 
-	~tcp_fiber(void)
-	{
+	~tcp_fiber(void) {
 		delete conn_;
 	}
 
 	// @override
-	void run(void)
-	{
+	void run(void) {
 		int n, i = 0;
 		acl::string buf;
 		while (!conn_->eof()) {
-			if (conn_->gets(buf) == false)
+			if (!conn_->gets(buf)) {
 				break;
+			}
 			n = atoi(buf.c_str());
 			if (n != i) {
 				printf("invalid read: %d, i=%d\r\n", n, i);
@@ -39,8 +37,7 @@ private:
 	}
 };
 
-class consumer_fiber : public acl::fiber
-{
+class consumer_fiber : public acl::fiber {
 public:
 	consumer_fiber(acl::mbox<acl::socket_stream>& mbox) : mbox_(mbox) {}
 	~consumer_fiber(void) {}
@@ -49,12 +46,12 @@ private:
 	acl::mbox<acl::socket_stream>& mbox_;
 
 	// @override
-	void run(void)
-	{
+	void run(void) {
 		while (true) {
 			acl::socket_stream* conn = mbox_.pop();
-			if (conn == NULL)
+			if (conn == NULL) {
 				continue;
+			}
 
 			printf("thread-%lu: accept one, fd=%d\r\n",
 				acl::thread::thread_self(),
@@ -65,8 +62,7 @@ private:
 	}
 };
 
-class consumer_thread : public acl::thread
-{
+class consumer_thread : public acl::thread {
 public:
 	consumer_thread(acl::mbox<acl::socket_stream>& mbox) : mbox_(mbox) {}
 	~consumer_thread(void) {}
@@ -75,8 +71,7 @@ private:
 	acl::mbox<acl::socket_stream>& mbox_;
 
 	// @override
-	void* run(void)
-	{
+	void* run(void) {
 		consumer_fiber fiber(mbox_);
 		fiber.start();
 
@@ -85,15 +80,16 @@ private:
 	}
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	acl::string addr("127.0.0.1:9001");
 	int rw_timeout = -1;
 
-	if (argc >= 2)
+	if (argc >= 2) {
 		addr = argv[1];
-	if (argc >= 3)
+	}
+	if (argc >= 3) {
 		rw_timeout = atoi(argv[2]);
+	}
 
 	acl::server_socket server;
 	if (server.open(addr) == false) {
@@ -117,10 +113,11 @@ int main(int argc, char* argv[])
 		}
 
 		conn->set_rw_timeout(rw_timeout);
-		if (i++ % 2 == 0)
+		if (i++ % 2 == 0) {
 			mbox1.push(conn);
-		else
+		}  else {
 			mbox2.push(conn);
+		}
 	}
 
 	return  0;

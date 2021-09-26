@@ -1,7 +1,6 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-int main(void)
-{
+int main(void) {
 	acl::http_request req("www.baidu.com:80");
 	acl::http_header& hdr = req.request_header();
 	hdr.set_url("/s")

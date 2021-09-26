@@ -2,8 +2,7 @@
 
 static long long __count, __add, __dec;
 
-class consumer : public acl::thread
-{
+class consumer : public acl::thread {
 public:
 	consumer(acl::thread_cond& cond, acl::thread_mutex& mutex)
 	: cond_(cond)
@@ -13,8 +12,7 @@ public:
 	~consumer(void) {}
 
 private:
-	void* run(void)
-	{
+	void* run(void) {
 		long long timeo = 10000;
 
 		mutex_.lock();
@@ -43,8 +41,7 @@ private:
 	acl::thread_mutex& mutex_;
 };
 
-int main(void)
-{
+int main(void) {
 	acl::thread_mutex mutex;
 	acl::thread_cond  cond(&mutex);
 

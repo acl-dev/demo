@@ -4,8 +4,7 @@
 #include <stdio.h>
 #include <getopt.h>
 
-static void resolve2(const char* domain)
-{
+static void resolve2(const char* domain) {
 	char   **pptr;
 	struct hostent *hptr;
 	char   str[32];
@@ -36,8 +35,7 @@ static void resolve2(const char* domain)
 		break;
 	}
 }
-static void resolve(const char* domain)
-{
+static void resolve(const char* domain) {
 	ACL_ITER iter;
 	int herr;
 	ACL_DNS_DB* db = acl_gethostbyname(domain, &herr);
@@ -58,13 +56,11 @@ static void resolve(const char* domain)
 	acl_netdb_free(db);
 }
 
-static void usage(const char* procname)
-{
+static void usage(const char* procname) {
 	printf("usage: %s -h help -n domain\r\n", procname);
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	int  ch;
 	char buf[256];
 

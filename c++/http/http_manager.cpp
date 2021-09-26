@@ -2,8 +2,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
 static bool test(acl::http_request_pool& hpool, const char* url,
-	bool keep_alive, acl::string& redirect_url)
-{
+	bool keep_alive, acl::string& redirect_url) {
 	acl::http_request* req = (acl::http_request*) hpool.peek();
 	if (req == NULL) {
 		printf("peek connection error\r\n");
@@ -57,8 +56,7 @@ static bool test(acl::http_request_pool& hpool, const char* url,
 }
 
 static bool test(acl::http_request_manager& manager,
-	acl::http_request_pool& hpool, const char* url, bool keep_alive)
-{
+	acl::http_request_pool& hpool, const char* url, bool keep_alive) {
 	acl::string redirect_url;
 
 	do {
@@ -81,13 +79,11 @@ static bool test(acl::http_request_manager& manager,
 	return true;
 }
 
-static void usage(const char* procname)
-{
+static void usage(const char* procname) {
 	printf("usage: %s -h[help] -s addrs -u url -k [if keep_alive, default: false]\r\n", procname);
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	int ch, count = 1;
 	bool keep_alive = false;
 	acl::string url;

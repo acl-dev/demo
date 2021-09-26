@@ -3,8 +3,7 @@
 #include <unistd.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-int main(void)
-{
+int main(void) {
 	const char* filepath = "file.dummy";
 	acl::fstream fp;
 

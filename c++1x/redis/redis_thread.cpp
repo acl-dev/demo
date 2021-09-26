@@ -23,16 +23,15 @@ static void thread_main(acl::redis_client_cluster& conns, size_t id, size_t max)
 int main(void) {
 	acl::redis_client_cluster conns;  // the connections with the redis cluster
 	conns.set("127.0.0.1:6379", 0);   // set one address of the redis cluster
-	size_t max = 5, nthreads = 10;
+	size_t max = 5;
+	const size_t nthreads = 10;
 
-	std::vector<std::thread*> threads;
+	std::thread threads[nthreads];
 	for (size_t i = 0; i < nthreads; i++) {  // create some threads to test redis
-		std::thread* thread = new std::thread(thread_main, std::ref(conns), i, max);
-		threads.push_back(thread);
+		threads[i] = std::thread(thread_main, std::ref(conns), i, max);
 	}
-	for (std::vector<std::thread*>::iterator it = threads.begin(); it != threads.end(); ++it) {
-		(*it)->join();  // wait for the thread to exit
-		delete *it;
+	for (size_t i = 0; i < nthreads; i++) {
+		threads[i].join();  // wait for the thread to exit
 	}
 	return 0;
 }

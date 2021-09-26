@@ -4,8 +4,7 @@
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/libfiber.hpp>
 
-class fiber_transfer : public acl::fiber
-{
+class fiber_transfer : public acl::fiber {
 public:
 	fiber_transfer(acl::istream& in, acl::ostream& out)
 	: in_(in), out_(out), peer_(NULL)
@@ -13,25 +12,21 @@ public:
 
 	~fiber_transfer(void) {}
 
-	void set_peer(fiber_transfer& peer)
-	{
+	void set_peer(fiber_transfer& peer) {
 		peer_ = &peer;
 	}
 
-	void unset_peer(void)
-	{
+	void unset_peer(void) {
 		peer_ = NULL;
 	}
 
-	void wait(void)
-	{
+	void wait(void) {
 		(void) box_.pop();
 	}
 
 protected:
 	// @override
-	void run(void)
-	{
+	void run(void) {
 		char buf[8192];
 		while (true) {
 			int ret = in_.read(buf, sizeof(buf), false);
@@ -60,16 +55,14 @@ private:
 	fiber_transfer* peer_;
 };
 
-class fiber_proxy : public acl::fiber
-{
+class fiber_proxy : public acl::fiber {
 public:
 	fiber_proxy(acl::socket_stream& conn) : conn_(conn) {}
 	~fiber_proxy(void) {}
 
 protected:
 	// @override
-	void run(void)
-	{
+	void run(void) {
 		acl::stdin_stream  in;
 		acl::stdout_stream out;
 
@@ -94,21 +87,18 @@ private:
 	acl::socket_stream& conn_;
 };
 
-static void transfer(acl::socket_stream& conn)
-{
+static void transfer(acl::socket_stream& conn) {
 	fiber_proxy fb(conn);
 	fb.start();
 
 	acl::fiber::schedule();
 }
 
-static void usage(const char* procname)
-{
+static void usage(const char* procname) {
 	printf("usage: %s -h [help] -P proxy_addr -R remote_addr\r\n", procname);
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	acl::string proxy_addr, remote_addr;
 	int ch;
 
