@@ -37,7 +37,7 @@ BIN=bin
 
 $(shell mkdir -p $(BIN) )
 
-all: httpd redis_thread redis_pipeline fiber_echod
+all: httpd redis_thread redis_pipeline fiber_echod thread_pool tcp_server tcp_client
 
 clean cl:
 	@(rm -f	$(BIN)/httpd)
@@ -45,6 +45,9 @@ clean cl:
 	@(rm -f	$(BIN)/redis_thread)
 	@(rm -f	$(BIN)/redis_pipeline)
 	@(rm -f $(BIN)/fiber_echod)
+	@(rm -f $(BIN)/thread_pool)
+	@(rm -f $(BIN)/tcp_server)
+	@(rm -f $(BIN)/tcp_client)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -69,3 +72,20 @@ fiber_echod: fiber/fiber_echod.o
 	g++ fiber/fiber_echod.o -o $(BIN)/fiber_echod $(ldflags)
 fiber/fiber_echod.o: fiber/fiber_echod.cpp
 	g++ $(CFLAGS) fiber/fiber_echod.cpp -o fiber/fiber_echod.o
+
+thread_pool: thread_pool/thread_pool.o thread_pool/main.o
+	g++ thread_pool/thread_pool.o thread_pool/main.o -o $(BIN)/thread_pool $(ldflags)
+thread_pool/thread_pool.o: thread_pool/thread_pool.cpp
+	g++ $(CFLAGS) thread_pool/thread_pool.cpp -o thread_pool/thread_pool.o
+thread_pool/main.o: thread_pool/main.cpp
+	g++ $(CFLAGS) thread_pool/main.cpp -o thread_pool/main.o
+
+tcp_server: net/tcp_server.o
+	g++ net/tcp_server.o -o $(BIN)/tcp_server $(ldflags)
+net/tcp_server.o: net/tcp_server.cpp
+	g++ $(CFLAGS) net/tcp_server.cpp -o net/tcp_server.o
+
+tcp_client: net/tcp_client.o
+	g++ net/tcp_client.o -o $(BIN)/tcp_client $(ldflags)
+net/tcp_client.o: net/tcp_client.cpp
+	g++ $(CFLAGS) net/tcp_client.cpp -o net/tcp_client.o
