@@ -15,7 +15,7 @@ static void echo(acl::socket_stream* conn, size_t dlen) {
 
 		if (len > 0 && (len % (100 * MB)) == 0) {
 			char info[64];
-			snprintf(info, sizeof(info), "size=%lld", len);
+			snprintf(info, sizeof(info), "size=%lld, ret=%d", len, ret);
 			acl::meter_time(__func__, __LINE__, info);
 		}
 	}
