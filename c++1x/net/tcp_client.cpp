@@ -1,22 +1,24 @@
 #include <thread>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
-static void sender(const acl::string& addr, size_t max) {
+static void sender(const acl::string& addr, size_t max, size_t len) {
 	acl::socket_stream conn;
 	if (!conn.open(addr, 10, 10)) {
 		printf("connect %s error %s\r\n", addr.c_str(), acl::last_serror());
 		return;
 	}
 
-	char buf[8192];
-	memset(buf, 'x', sizeof(buf));
+	char* buf = new char[len];
+	memset(buf, 'x', len);
 
 	for (size_t i = 0; i < max; i++) {
-		if (conn.write(buf, sizeof(buf)) == -1) {
+		if (conn.write(buf, len) == -1) {
 			printf("write error %s\r\n", acl::last_serror());
 			break;
 		}
 	}
+
+	delete []buf;
 }
 
 
@@ -40,9 +42,18 @@ int main(int argc, char* argv[]) {
 		nthreads = 20;
 	}
 
+	size_t len = 8192;
+	if (argc >= 5) {
+		len = (size_t) atol(argv[4]);
+	}
+	if (len == 0 || len > 1024000) {
+		len = 1024000;
+	}
+
 	std::vector<std::thread*> threads;
 	for (size_t i = 0; i < nthreads; i++) {
-		std::thread* thread = new std::thread(sender, std::ref(addr), max);
+		std::thread* thread = new
+			std::thread(sender, std::ref(addr), max, len);
 		threads.push_back(thread);
 	}
 

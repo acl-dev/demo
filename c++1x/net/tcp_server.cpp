@@ -3,11 +3,11 @@
 
 #define MB	(1024 * 1024)
 
-static void echo(acl::socket_stream* conn) {
+static void echo(acl::socket_stream* conn, size_t dlen) {
 	long long len = 0;
-	char buf[8192];
+	char* buf = new char[dlen];
 	while (!conn->eof()) {
-		int ret = conn->read(buf, sizeof(buf), false);
+		int ret = conn->read(buf, dlen, false);
 		if (ret == -1) {
 			break;
 		}
@@ -20,13 +20,22 @@ static void echo(acl::socket_stream* conn) {
 		}
 	}
 
+	delete []buf;
 	delete conn;
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
 	acl::acl_cpp_init();
 	const char* addr = "0.0.0.0|9101";
 	acl::log::stdout_open(true);
+
+	size_t len = 8192;
+	if (argc >= 2) {
+		len = (size_t) atol(argv[1]);
+	}
+	if (len == 0 || len > 10240000) {
+		len = 10240000;
+	}
 
 	acl::server_socket ss;
 	if (!ss.open(addr)) {
@@ -40,7 +49,7 @@ int main(void) {
 			printf("accept error %s\r\n", acl::last_serror());
 			break;
 		}
-		std::thread thread(echo, conn);
+		std::thread thread(echo, conn, len);
 		thread.detach();
 	}
 
