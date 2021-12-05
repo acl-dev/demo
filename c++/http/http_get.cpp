@@ -23,5 +23,45 @@ int main(void) {
 	}
 
 	printf("%s\r\n", body.c_str());
+
+	//////////////////////////////////////////////////////////////////////
+
+	printf("\r\n\r\nEnter any key to continue ...");
+	fflush(stdout);
+	getchar();
+
+	acl::http_request req2("http://www.baidu.com");
+
+	if (!req2.request(NULL, 0)) {
+		printf("request error\r\n");
+		return 1;
+	}
+
+	body.clear();
+	if (!req2.get_body(body)) {
+		printf("get_body error\r\n");
+		return 1;
+	}
+	printf("ok: %s\r\n", body.c_str());
+
+	//////////////////////////////////////////////////////////////////////
+
+	printf("\r\n\r\nEnter any key to continue ...");
+	fflush(stdout);
+	getchar();
+
+	acl::http_request req3("www.baidu.com");
+
+	if (!req3.request(NULL, 0)) {
+		printf("request error\r\n");
+		return 1;
+	}
+
+	body.clear();
+	if (!req3.get_body(body)) {
+		printf("get_body error\r\n");
+		return 1;
+	}
+	printf("ok: %s\r\n", body.c_str());
 	return 0;
 }
