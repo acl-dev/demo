@@ -39,7 +39,7 @@ service master_fiber {
 #	预启动进程数，该值不得大于 master_maxproc
 	master_prefork = 1
 #	进程程序名
-	master_command = master_fiber
+	master_command = fiber_httpd
 #	进程日志记录文件
 	master_log = {install_path}/var/log/httpd
 #	调试日志方式，格式：tag:level; tag:level; tab:level, 如：all:1; 101:2

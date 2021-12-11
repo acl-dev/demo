@@ -37,11 +37,11 @@ BIN=bin
 
 $(shell mkdir -p $(BIN) )
 
-all: httpd redis_thread redis_pipeline fiber_echod thread_pool tcp_server tcp_client
+all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool tcp_server tcp_client
 
 clean cl:
-	@(rm -f	$(BIN)/httpd)
-	@(rm -f $(BIN)/httpd.cf)
+	@(rm -f	$(BIN)/fiber_httpd)
+	@(rm -f $(BIN)/fiber_httpd.cf)
 	@(rm -f	$(BIN)/redis_thread)
 	@(rm -f	$(BIN)/redis_pipeline)
 	@(rm -f $(BIN)/fiber_echod)
@@ -52,11 +52,11 @@ clean cl:
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
 
-httpd: httpd/httpd.o
-	g++ httpd/httpd.o -o $(BIN)/httpd $(ldflags)
-	@(cp httpd/httpd.cf $(BIN)/)
-httpd/httpd.o: httpd/httpd.cpp
-	g++ $(CFLAGS) httpd/httpd.cpp -o httpd/httpd.o
+fiber_httpd: httpd/fiber_httpd.o
+	g++ httpd/fiber_httpd.o -o $(BIN)/fiber_httpd $(ldflags)
+	@(cp httpd/fiber_httpd.cf $(BIN)/)
+httpd/fiber_httpd.o: httpd/fiber_httpd.cpp
+	g++ $(CFLAGS) httpd/fiber_httpd.cpp -o httpd/fiber_httpd.o
 
 redis_thread: redis/redis_thread.o
 	g++ redis/redis_thread.o -o $(BIN)/redis_thread $(ldflags)
