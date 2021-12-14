@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/fiber.hpp>
 #include <acl-lib/fiber/go_fiber.hpp>
