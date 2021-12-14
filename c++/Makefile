@@ -65,6 +65,7 @@ all:	h2b \
 	redis_pipeline \
 	redis_pipeline_fiber \
 	fiber_demo \
+	fiber_tbox \
 	fiber_echod \
 	fiber_mutex \
 	fiber_event \
@@ -106,6 +107,7 @@ clean cl:
 		$(BIN)/redis_pipeline \
 		$(BIN)/redis_pipeline_fiber \
 		$(BIN)/fiber_demo \
+		$(BIN)/fiber_tbox \
 		$(BIN)/fiber_echod \
 		$(BIN)/fiber_mutex \
 		$(BIN)/fiber_event \
@@ -287,6 +289,11 @@ fiber_demo: fiber/fiber_demo.o
 	g++ fiber/fiber_demo.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_demo
 fiber/fiber_demo.o: fiber/fiber_demo.cpp
 	g++ $(CFLAGS) fiber/fiber_demo.cpp -o fiber/fiber_demo.o
+
+fiber_tbox: fiber/fiber_tbox.o
+	g++ fiber/fiber_tbox.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_tbox
+fiber/fiber_tbox.o: fiber/fiber_tbox.cpp
+	g++ $(CFLAGS) fiber/fiber_tbox.cpp -o fiber/fiber_tbox.o
 
 fiber_echod: fiber/fiber_echod.o
 	g++ fiber/fiber_echod.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_echod

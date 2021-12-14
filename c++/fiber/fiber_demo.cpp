@@ -4,9 +4,10 @@
 class myfiber : public acl::fiber {
 public:
 	myfiber(void) {}
-	~myfiber(void) {}
 
 protected:
+	~myfiber(void) {}
+
 	// @override
 	void run(void) {
 		printf("fiber-%d-%d running\r\n", get_id(), acl::fiber::self());
