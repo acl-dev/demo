@@ -63,6 +63,7 @@ all:	h2b \
 	redis_thread \
 	redis_set \
 	redis_pipeline \
+	redis_pipeline2 \
 	redis_pipeline_fiber \
 	fiber_demo \
 	fiber_tbox \
@@ -105,6 +106,7 @@ clean cl:
 		$(BIN)/redis_thread \
 		$(BIN)/redis_set \
 		$(BIN)/redis_pipeline \
+		$(BIN)/redis_pipeline2 \
 		$(BIN)/redis_pipeline_fiber \
 		$(BIN)/fiber_demo \
 		$(BIN)/fiber_tbox \
@@ -279,6 +281,11 @@ redis_pipeline: redis/redis_pipeline.o
 	g++ redis/redis_pipeline.o -lacl_all -ldl -lz -lpthread -o $(BIN)/redis_pipeline
 redis/redis_pipeline.o: redis/redis_pipeline.cpp
 	g++ $(CFLAGS) redis/redis_pipeline.cpp -o redis/redis_pipeline.o
+
+redis_pipeline2: redis/redis_pipeline2.o
+	g++ redis/redis_pipeline2.o -lacl_all -ldl -lz -lpthread -o $(BIN)/redis_pipeline2
+redis/redis_pipeline2.o: redis/redis_pipeline2.cpp
+	g++ $(CFLAGS) redis/redis_pipeline2.cpp -o redis/redis_pipeline2.o
 
 redis_pipeline_fiber: redis/redis_pipeline_fiber.o
 	g++ redis/redis_pipeline_fiber.o -lfiber_cpp -lacl_all -lfiber -ldl -lz -lpthread -o $(BIN)/redis_pipeline_fiber
