@@ -114,6 +114,7 @@ clean cl:
 		$(BIN)/fiber_mutex \
 		$(BIN)/fiber_event \
 		$(BIN)/fiber_redis \
+		$(BIN)/fiber_stack \
 		$(BIN)/thread_fiber_redis \
 		$(BIN)/thread_fiber_client \
 		$(BIN)/thread_fiber_server \
@@ -321,6 +322,11 @@ fiber_redis: fiber/fiber_redis.o
 	g++ fiber/fiber_redis.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_redis
 fiber/fiber_redis.o: fiber/fiber_redis.cpp
 	g++ $(CFLAGS) fiber/fiber_redis.cpp -o fiber/fiber_redis.o
+
+fiber_stack: fiber/fiber_stack.o
+	g++ fiber/fiber_stack.o -lfiber_cpp -lacl_all -lfiber -lunwind -lunwind-x86_64 -lz -ldl -lpthread -o $(BIN)/fiber_stack
+fiber/fiber_stack.o: fiber/fiber_stack.cpp
+	g++ -O0 -c -g -W fiber/fiber_stack.cpp -o fiber/fiber_stack.o
 
 thread_fiber_redis: fiber/thread_fiber_redis.o
 	g++ fiber/thread_fiber_redis.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/thread_fiber_redis
