@@ -115,6 +115,7 @@ clean cl:
 		$(BIN)/fiber_event \
 		$(BIN)/fiber_redis \
 		$(BIN)/fiber_stack \
+		$(BIN)/fiber_deadlock \
 		$(BIN)/thread_fiber_redis \
 		$(BIN)/thread_fiber_client \
 		$(BIN)/thread_fiber_server \
@@ -327,6 +328,11 @@ fiber_stack: fiber/fiber_stack.o
 	g++ fiber/fiber_stack.o -lfiber_cpp -lacl_all -lfiber -lunwind -lunwind-x86_64 -lz -ldl -lpthread -o $(BIN)/fiber_stack
 fiber/fiber_stack.o: fiber/fiber_stack.cpp
 	g++ -O0 -c -g -W fiber/fiber_stack.cpp -o fiber/fiber_stack.o
+
+fiber_deadlock: fiber/fiber_deadlock.o
+	g++ fiber/fiber_deadlock.o -lfiber_cpp -lacl_all -lfiber -lunwind -lunwind-x86_64 -lz -ldl -lpthread -o $(BIN)/fiber_deadlock
+fiber/fiber_deadlock.o: fiber/fiber_deadlock.cpp
+	g++ -O0 -c -g -W fiber/fiber_deadlock.cpp -o fiber/fiber_deadlock.o
 
 thread_fiber_redis: fiber/thread_fiber_redis.o
 	g++ fiber/thread_fiber_redis.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/thread_fiber_redis
