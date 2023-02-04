@@ -15,8 +15,6 @@ private:
 	void run(void) {
 		printf("fiber-%d-%d running\r\n", get_id(), acl::fiber::self());
 		func1();
-
-		delete this;
 	}
 
 	void func1(void) {
@@ -34,22 +32,21 @@ private:
 
 class checker : public acl::fiber {
 public:
-	checker(acl::fiber_tbox<bool>& box, acl::fiber* fb)
+	checker(acl::fiber_tbox<bool>& box, acl::fiber& fb)
 	: box_(box), fb_(fb) {}
 	~checker(void) {}
 
 private:
 	acl::fiber_tbox<bool>& box_;
-	acl::fiber* fb_;
+	acl::fiber& fb_;
 
 	void run(void) {
 		std::vector<acl::fiber_frame> stack;
-		acl::fiber::stacktrace(*fb_, stack, 50);
+		acl::fiber::stacktrace(fb_, stack, 50);
 		show_stack(stack);
 		printf("\r\n");
 
 		box_.push(NULL);
-		delete this;
 	}
 
 	void show_stack(const std::vector<acl::fiber_frame>& stack) {
@@ -66,12 +63,15 @@ int main(void) {
 	acl::log::stdout_open(true);
 
 	acl::fiber_tbox<bool> box;
-	acl::fiber* f = new myfiber(box);
-	f->start();
+	acl::fiber* f1 = new myfiber(box);
+	f1->start();
 
-	acl::fiber* f2 = new checker(box, f);
+	acl::fiber* f2 = new checker(box, *f1);
 	f2->start();
 
 	acl::fiber::schedule();
+
+	delete f1;
+	delete f2;
 	return 0;
 }
