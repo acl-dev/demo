@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>  // fiber_tbox inherits from box in lib_acl_cpp
 #include <acl-lib/fiber/libfiber.hpp>
 
@@ -35,24 +34,19 @@ private:
 
 class checker : public acl::fiber {
 public:
-	checker(acl::fiber_tbox<bool>& box, acl::fiber* fb, int n)
-	: box_(box), fb_(fb), count_(n) {}
+	checker(acl::fiber_tbox<bool>& box, acl::fiber* fb)
+	: box_(box), fb_(fb) {}
 	~checker(void) {}
 
 private:
 	acl::fiber_tbox<bool>& box_;
 	acl::fiber* fb_;
-	int count_;
 
 	void run(void) {
-		for (int i = 0; i < count_; i++) {
-			std::vector<acl::fiber_frame> stack;
-			acl::fiber::stacktrace(*fb_, stack, 50);
-			show_stack(stack);
-			printf("\r\n");
-
-			sleep(2);
-		}
+		std::vector<acl::fiber_frame> stack;
+		acl::fiber::stacktrace(*fb_, stack, 50);
+		show_stack(stack);
+		printf("\r\n");
 
 		box_.push(NULL);
 		delete this;
@@ -75,7 +69,7 @@ int main(void) {
 	acl::fiber* f = new myfiber(box);
 	f->start();
 
-	acl::fiber* f2 = new checker(box, f, 10);
+	acl::fiber* f2 = new checker(box, f);
 	f2->start();
 
 	acl::fiber::schedule();
