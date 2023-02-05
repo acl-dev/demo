@@ -48,14 +48,7 @@ private:
 	// @override
 	void run(void) {
 		sleep(2);
-		ACL_FIBER_MUTEX_STATS *stats;
-		stats = acl_fiber_mutex_deadlock();
-		if (stats) {
-			acl_fiber_mutex_stats_show(stats);
-			acl_fiber_mutex_stats_free(stats);
-			printf("\r\n");
-		}
-
+		acl::fiber_mutex::deadlock_show();
 	}
 };
 
