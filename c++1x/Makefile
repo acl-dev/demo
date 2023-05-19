@@ -38,7 +38,7 @@ BIN=bin
 $(shell mkdir -p $(BIN) )
 
 all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool \
-	tcp_server tcp_server2 tcp_client go_waiter
+	tcp_server tcp_server2 tcp_client go_waiter fiber_tbox
 
 clean cl:
 	@(rm -f	$(BIN)/fiber_httpd)
@@ -51,6 +51,7 @@ clean cl:
 	@(rm -f $(BIN)/tcp_server2)
 	@(rm -f $(BIN)/tcp_client)
 	@(rm -f $(BIN)/go_waiter)
+	@(rm -f $(BIN)/fiber_tbox)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -80,6 +81,11 @@ go_waiter: fiber/go_waiter.o
 	g++ fiber/go_waiter.o -o $(BIN)/go_waiter $(ldflags)
 fiber/go_waiter.o: fiber/go_waiter.cpp
 	g++ $(CFLAGS) fiber/go_waiter.cpp -o fiber/go_waiter.o
+
+fiber_tbox: fiber/fiber_tbox.o
+	g++ fiber/fiber_tbox.o -o $(BIN)/fiber_tbox $(ldflags)
+fiber/fiber_tbox.o: fiber/fiber_tbox.cpp
+	g++ $(CFLAGS) fiber/fiber_tbox.cpp -o fiber/fiber_tbox.o
 
 thread_pool: thread_pool/thread_pool.o thread_pool/main.o
 	g++ thread_pool/thread_pool.o thread_pool/main.o -o $(BIN)/thread_pool $(ldflags)
