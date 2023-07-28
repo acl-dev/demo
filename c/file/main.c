@@ -28,15 +28,14 @@ static double stamp_sub(const struct timeval *from, const struct timeval *sub)
 //////////////////////////////////////////////////////////////////////////////
 
 static int __open_flags = O_WRONLY | O_APPEND | O_CREAT;
-static long long __write_count = 100000;
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void sys_write(const char *path)
+static void sys_write(const char *path, size_t count)
 {
-	int   fd = open(path, __open_flags, 0600), ret;
-	char  buf[1] = { '0' };
-	long long i;
+	int    fd = open(path, __open_flags, 0600), ret;
+	char   buf[1] = { '0' };
+	size_t i;
 
 	if (fd < 0) {
 		printf("open %s error %s\r\n", path, strerror(errno));
@@ -45,7 +44,7 @@ static void sys_write(const char *path)
 
 	printf("open %s ok, fd=%d\r\n", path, fd);
 
-	for (i = 0; i < __write_count; i++) {
+	for (i = 0; i < count; i++) {
 		if (write(fd, buf, 1) <= 0) {
 			printf("write to %s error %s\r\n", path, strerror(errno));
 			exit(1);
@@ -63,22 +62,25 @@ static void sys_write(const char *path)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void uring_write(const char *path)
+static void uring_write(const char *path, size_t count)
 {
-	int   fd = open(path, __open_flags, 0600), ret;
-	long long i;
-	char  buf[1] = { '0' };
-	struct io_uring uring;
+	int    fd = open(path, __open_flags, 0600), ret;
+	size_t i;
+	char   buf[1] = { '0' };
 
 	if (fd < 0) {
 		printf("open %s error %s\r\n", path, strerror(errno));
 		exit(1);
 	}
 
-	struct io_uring_params params;
-	memset(&params, 0, sizeof(params));
+	printf("open %s ok, fd=%d\r\n", path, fd);
 
+	struct io_uring_params params;
+	struct io_uring uring;
+
+	memset(&params, 0, sizeof(params));
 	ret = io_uring_queue_init_params(100, &uring, &params);
+
 	if (ret < 0) {
 		printf("init io_uring error=%s\r\n", strerror(errno));
 		exit(1);
@@ -87,9 +89,7 @@ static void uring_write(const char *path)
 	struct io_uring_sqe *sqe;
 	struct io_uring_cqe *cqe;
 
-	printf("open %s ok, fd=%d\r\n", path, fd);
-
-	for (i = 0; i < __write_count; i++) {
+	for (i = 0; i < count; i++) {
 		sqe = io_uring_get_sqe(&uring);
 		io_uring_prep_write(sqe, fd, buf, 1, i);
 		io_uring_submit(&uring);
@@ -115,7 +115,7 @@ static void uring_write(const char *path)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void test_write(const char *filepath)
+static void test_write(const char *filepath, size_t count)
 {
 	struct timeval begin, end;
 	double cost, speed;
@@ -124,15 +124,15 @@ static void test_write(const char *filepath)
 
 	gettimeofday(&begin, NULL);
 
-	uring_write(filepath);
+	uring_write(filepath, count);
 
 	gettimeofday(&end, NULL);
 
 	cost = stamp_sub(&end, &begin);
-	speed = (__write_count * 1000) / (cost > 0 ? cost : 0.001);
+	speed = (count * 1000) / (cost > 0 ? cost : 0.001);
 
-	printf("uring write, total write=%lld, cost=%.2f ms, speed=%.2f\r\n",
-		__write_count, cost, speed);
+	printf("uring write, total write=%ld, cost=%.2f ms, speed=%.2f\r\n",
+		count, cost, speed);
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -140,15 +140,15 @@ static void test_write(const char *filepath)
 
 	gettimeofday(&begin, NULL);
 
-	sys_write(filepath);
+	sys_write(filepath, count);
 
 	gettimeofday(&end, NULL);
 
 	cost = stamp_sub(&end, &begin);
-	speed = (__write_count * 1000) / (cost > 0 ? cost : 0.001);
+	speed = (count * 1000) / (cost > 0 ? cost : 0.001);
 
-	printf("sys write, total write=%lld, cost=%.2f ms, speed=%.2f\r\n",
-		__write_count, cost, speed);
+	printf("sys write, total write=%ld, cost=%.2f ms, speed=%.2f\r\n",
+		count, cost, speed);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -163,7 +163,7 @@ static void usage(const char *proc)
 
 int main(int argc, char *argv[])
 {
-	int  ch;
+	int  ch, count = 10000;
 	char path[256];
 
 	snprintf(path, sizeof(path), "file.txt");
@@ -177,13 +177,13 @@ int main(int argc, char *argv[])
 			snprintf(path, sizeof(path), "%s", optarg);
 			break;
 		case 'n':
-			__write_count = atoi(optarg);
+			count = atoi(optarg);
 			break;
 		default:
 			break;
 		}
 	}
 
-	test_write(path);
+	test_write(path, (size_t) count);
 	return 0;
 }
