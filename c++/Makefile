@@ -72,6 +72,7 @@ all:	h2b \
 	fiber_event \
 	fiber_redis \
 	fiber_nslookup \
+	fiber_kill \
 	thread_fiber_redis \
 	thread_fiber_client \
 	thread_fiber_server \
@@ -118,6 +119,7 @@ clean cl:
 		$(BIN)/fiber_stack \
 		$(BIN)/fiber_deadlock \
 		$(BIN)/fiber_nslookup \
+		$(BIN)/fiber_kill \
 		$(BIN)/thread_fiber_redis \
 		$(BIN)/thread_fiber_client \
 		$(BIN)/thread_fiber_server \
@@ -330,6 +332,11 @@ fiber_nslookup: fiber/fiber_nslookup.o
 	g++ fiber/fiber_nslookup.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_nslookup
 fiber/fiber_nslookup.o: fiber/fiber_nslookup.cpp
 	g++ $(CFLAGS) fiber/fiber_nslookup.cpp -o fiber/fiber_nslookup.o
+
+fiber_kill: fiber/fiber_kill.o
+	g++ fiber/fiber_kill.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_kill
+fiber/fiber_kill.o: fiber/fiber_kill.cpp
+	g++ $(CFLAGS) fiber/fiber_kill.cpp -o fiber/fiber_kill.o
 
 fiber_stack: fiber/fiber_stack.o
 	g++ fiber/fiber_stack.o -lfiber_cpp -lacl_all -lfiber -lunwind -lunwind-x86_64 -lz -ldl -lpthread -o $(BIN)/fiber_stack
