@@ -56,6 +56,7 @@ all:	h2b \
 	http_post \
 	http_pool \
 	http_manager \
+	https_get \
 	mysql \
 	mysql_pool \
 	redis_demo \
@@ -101,6 +102,7 @@ clean cl:
 		$(BIN)/http_post \
 		$(BIN)/http_pool \
 		$(BIN)/http_manager \
+		$(BIN)/https_get \
 		$(BIN)/mysql \
 		$(BIN)/mysql_pool \
 		$(BIN)/redis_demo \
@@ -252,6 +254,11 @@ http_manager: http/http_manager.o
 	g++ http/http_manager.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/http_manager
 http/http_manager.o: http/http_manager.cpp
 	g++ $(CFLAGS) http/http_manager.cpp -o http/http_manager.o
+
+https_get: http/https_get.o
+	g++ http/https_get.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/https_get
+http/https_get.o: http/https_get.cpp
+	g++ $(CFLAGS) http/https_get.cpp -o http/https_get.o
 
 mysql: db/mysql.o
 	g++ db/mysql.o -lacl_all -ldl -lz -lpthread -o $(BIN)/mysql
