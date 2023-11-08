@@ -57,6 +57,7 @@ all:	h2b \
 	http_post \
 	http_pool \
 	http_manager \
+	https_get \
 	mysql \
 	mysql_pool \
 	redis_demo \
@@ -72,6 +73,8 @@ all:	h2b \
 	fiber_mutex \
 	fiber_event \
 	fiber_redis \
+	fiber_nslookup \
+	fiber_kill \
 	thread_fiber_redis \
 	thread_fiber_client \
 	thread_fiber_server \
@@ -101,6 +104,7 @@ clean cl:
 		$(BIN)/http_post \
 		$(BIN)/http_pool \
 		$(BIN)/http_manager \
+		$(BIN)/https_get \
 		$(BIN)/mysql \
 		$(BIN)/mysql_pool \
 		$(BIN)/redis_demo \
@@ -116,6 +120,10 @@ clean cl:
 		$(BIN)/fiber_mutex \
 		$(BIN)/fiber_event \
 		$(BIN)/fiber_redis \
+		$(BIN)/fiber_stack \
+		$(BIN)/fiber_deadlock \
+		$(BIN)/fiber_nslookup \
+		$(BIN)/fiber_kill \
 		$(BIN)/thread_fiber_redis \
 		$(BIN)/thread_fiber_client \
 		$(BIN)/thread_fiber_server \
@@ -254,6 +262,11 @@ http_manager: http/http_manager.o
 http/http_manager.o: http/http_manager.cpp
 	g++ $(CFLAGS) http/http_manager.cpp -o http/http_manager.o
 
+https_get: http/https_get.o
+	g++ http/https_get.o -lacl_all $(ldflags) -ldl -lz -lpthread -o $(BIN)/https_get
+http/https_get.o: http/https_get.cpp
+	g++ $(CFLAGS) http/https_get.cpp -o http/https_get.o
+
 mysql: db/mysql.o
 	g++ db/mysql.o -lacl_all -ldl -lz -lpthread -o $(BIN)/mysql
 db/mysql.o: db/mysql.cpp
@@ -328,6 +341,26 @@ fiber_redis: fiber/fiber_redis.o
 	g++ fiber/fiber_redis.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_redis
 fiber/fiber_redis.o: fiber/fiber_redis.cpp
 	g++ $(CFLAGS) fiber/fiber_redis.cpp -o fiber/fiber_redis.o
+
+fiber_nslookup: fiber/fiber_nslookup.o
+	g++ fiber/fiber_nslookup.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_nslookup
+fiber/fiber_nslookup.o: fiber/fiber_nslookup.cpp
+	g++ $(CFLAGS) fiber/fiber_nslookup.cpp -o fiber/fiber_nslookup.o
+
+fiber_kill: fiber/fiber_kill.o
+	g++ fiber/fiber_kill.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/fiber_kill
+fiber/fiber_kill.o: fiber/fiber_kill.cpp
+	g++ $(CFLAGS) fiber/fiber_kill.cpp -o fiber/fiber_kill.o
+
+fiber_stack: fiber/fiber_stack.o
+	g++ fiber/fiber_stack.o -lfiber_cpp -lacl_all -lfiber -lunwind -lunwind-x86_64 -lz -ldl -lpthread -o $(BIN)/fiber_stack
+fiber/fiber_stack.o: fiber/fiber_stack.cpp
+	g++ -O0 -c -g -W fiber/fiber_stack.cpp -o fiber/fiber_stack.o
+
+fiber_deadlock: fiber/fiber_deadlock.o
+	g++ fiber/fiber_deadlock.o -lfiber_cpp -lacl_all -lfiber -lunwind -lunwind-x86_64 -lz -ldl -lpthread -o $(BIN)/fiber_deadlock
+fiber/fiber_deadlock.o: fiber/fiber_deadlock.cpp
+	g++ -O0 -c -g -W fiber/fiber_deadlock.cpp -o fiber/fiber_deadlock.o
 
 thread_fiber_redis: fiber/thread_fiber_redis.o
 	g++ fiber/thread_fiber_redis.o -lfiber_cpp -lacl_all -lfiber -lz -ldl -lpthread -o $(BIN)/thread_fiber_redis
