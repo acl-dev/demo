@@ -41,6 +41,7 @@ $(shell mkdir -p $(BIN))
 
 all:	h2b \
 	tbox \
+	zlib \
 	file_lock \
 	connect \
 	tcp_server \
@@ -79,6 +80,7 @@ all:	h2b \
 clean cl:
 	@(rm -f	$(BIN)/h2b \
 		$(BIN)/tbox \
+		$(BIN)/zlib \
 		$(BIN)/file_lock \
 		$(BIN)/connect \
 		$(BIN)/tcp_server \
@@ -131,6 +133,11 @@ tbox: common/tbox.o
 	g++ common/tbox.o -lacl_all -ldl -lz -lpthread -o $(BIN)/tbox
 common/tbox.o: common/tbox.cpp
 	g++ $(CFLAGS) common/tbox.cpp -o common/tbox.o
+
+zlib: common/zlib.o
+	g++ common/zlib.o -lacl_all -ldl -lz -lpthread -o $(BIN)/zlib
+common/zlib.o: common/zlib.cpp
+	g++ $(CFLAGS) common/zlib.cpp -o common/zlib.o
 
 file_lock: file/file_lock.o
 	g++ file/file_lock.cpp -lacl_all -ldl -lz -lpthread -o $(BIN)/file_lock
