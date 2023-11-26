@@ -45,6 +45,8 @@ all:	h2b \
 	file_lock \
 	connect \
 	tcp_server \
+    udp_server \
+    udp_client \
 	gethostbyname \
 	nio_client \
 	nio_server \
@@ -87,6 +89,8 @@ clean cl:
 		$(BIN)/file_lock \
 		$(BIN)/connect \
 		$(BIN)/tcp_server \
+		$(BIN)/udp_server \
+		$(BIN)/udp_client \
 		$(BIN)/gethostbyname \
 		$(BIN)/nio_client \
 		$(BIN)/nio_server \
@@ -161,6 +165,16 @@ tcp_server: net/tcp_server.o
 	g++ net/tcp_server.o -lacl_all -lz -ldl -lpthread -o $(BIN)/tcp_server
 net/tcp_server.o: net/tcp_server.cpp
 	g++ $(CFLAGS) net/tcp_server.cpp -o net/tcp_server.o
+
+udp_server: net/udp_server.o
+	g++ net/udp_server.o -lacl_all -lz -ldl -lpthread -o $(BIN)/udp_server
+net/udp_server.o: net/udp_server.cpp
+	g++ $(CFLAGS) net/udp_server.cpp -o net/udp_server.o
+
+udp_client: net/udp_client.o
+	g++ net/udp_client.o -lacl_all -lz -ldl -lpthread -o $(BIN)/udp_client
+net/udp_client.o: net/udp_client.cpp
+	g++ $(CFLAGS) net/udp_client.cpp -o net/udp_client.o
 
 gethostbyname: net/gethostbyname.o
 	g++ net/gethostbyname.o -lacl_all -lpthread -o $(BIN)/gethostbyname
