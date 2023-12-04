@@ -45,8 +45,8 @@ all:	h2b \
 	file_lock \
 	connect \
 	tcp_server \
-    udp_server \
-    udp_client \
+	udp_server \
+	udp_client \
 	gethostbyname \
 	nio_client \
 	nio_server \
@@ -80,7 +80,8 @@ all:	h2b \
 	thread_fiber_redis \
 	thread_fiber_client \
 	thread_fiber_server \
-	master_threads_echod
+	master_threads_echod \
+	json_builder
 
 clean cl:
 	@(rm -f	$(BIN)/h2b \
@@ -131,7 +132,8 @@ clean cl:
 		$(BIN)/thread_fiber_redis \
 		$(BIN)/thread_fiber_client \
 		$(BIN)/thread_fiber_server \
-		$(BIN)/master_threads_echod)
+		$(BIN)/master_threads_echod) \
+		$(BIN)/json_builder)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -395,3 +397,8 @@ master_threads_echod: server/master_threads_echod.o
 	g++ server/master_threads_echod.o -lacl_all -ldl -lz -lpthread -o $(BIN)/master_threads_echod
 server/master_threads_echod.o: server/master_threads_echod.cpp
 	g++ $(CFLAGS) server/master_threads_echod.cpp -o server/master_threads_echod.o
+
+json_builder: json/json_builder.o
+	g++ json/json_builder.o -lacl_all -ldl -lz -lpthread -o $(BIN)/json_builder
+json/json_builder.o: json/json_builder.cpp
+	g++ $(CFLAGS) json/json_builder.cpp -o json/json_builder.o
