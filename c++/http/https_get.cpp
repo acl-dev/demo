@@ -34,6 +34,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	acl::istream::set_rbuf_size(81920);
+
 	// Load crypto and ssl libs.
 	acl::openssl_conf::set_libpath(libcrypto, libssl);
 	if (!acl::openssl_conf::load()) {
@@ -41,14 +43,6 @@ int main(int argc, char *argv[]) {
 			libssl.c_str(), libcrypto.c_str());
 		return 1;
 	}
-
-	acl::http_url hu;
-	if (!hu.parse(url)) {
-		printf("Invalid url: %s\r\n", url.c_str());
-		return 1;
-	}
-
-	const char* domain = hu.get_domain();
 
 	// SSL in client mode.
 	acl::openssl_conf ssl_conf(false);
@@ -59,7 +53,7 @@ int main(int argc, char *argv[]) {
 
 	acl::string buf;
 	acl::http_header& hdr = req.request_header();
-	hdr.set_host(domain);
+	hdr.accept_gzip(true);
 
 	hdr.build_request(buf);
 	printf("request header:\r\n%s\r\n", buf.c_str());
@@ -75,11 +69,28 @@ int main(int argc, char *argv[]) {
 
 	// Read response from https server.
 	acl::string body;
+
+#if 1
 	if (!req.get_body(body)) {
 		printf("get_body error!\r\n");
 		return 1;
 	}
+	//printf("%s\r\n", body.c_str());
+	printf("Total read: %zd\r\n", body.size());
+#else
+	size_t total = 0;
+	while (true) {
+		int ret = req.read_body(body);
+		if (ret <= 0) {
+			break;
+		}
 
-	printf("%s\r\n", body.c_str());
+		total += body.size();
+		//printf("read %zd, total: %zd\r\n", body.size(), total);
+		body.clear();
+	}
+	printf("Total read=%zd\r\n", total);
+#endif
+
 	return 0;
 }
