@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
-#include <acl-lib/acl_cpp/lib_acl.hpp>
+#include <acl_cpp/lib_acl.hpp>
 
 static void usage(const char *proc) {
 	printf("usage: %s -u https_url -s path_to_ssl -c path_to_crypto\r\n", proc);
@@ -10,8 +10,15 @@ static void usage(const char *proc) {
 int main(int argc, char *argv[]) {
 	int ch;
 	acl::string url = "https://www.baidu.com/";
+#ifdef __linux__
 	acl::string libssl = "/usr/local/lib64/libssl.so";
 	acl::string libcrypto = "/usr/local/lib64/libcrypto.so";
+#elif	defined(__APPLE__)
+	acl::string libssl = "/usr/local/lib/libssl.dylib";
+	acl::string libcrypto = "/usr/local/lib/libcrypto.dylib";
+#else
+# error "Not support!"
+#endif
 
 	acl::log::stdout_open(true);
 
@@ -75,8 +82,11 @@ int main(int argc, char *argv[]) {
 		printf("get_body error!\r\n");
 		return 1;
 	}
-	//printf("%s\r\n", body.c_str());
-	printf("Total read: %zd\r\n", body.size());
+	if (body.size() > 10240) {
+		printf("Total read: %zd\r\n", body.size());
+	} else {
+		printf("%s\r\n", body.c_str());
+	}
 #else
 	size_t total = 0;
 	while (true) {
