@@ -37,7 +37,7 @@ bool http_servlet::doPost(acl::HttpServletRequest& req, acl::HttpServletResponse
 	res.setContentLength(buf.size());
 	res.setKeepAlive(req.isKeepAlive());
 
-	printf("Get: %s\r\n", json->to_string().c_str());
+	printf("Read: %s\r\n", json->to_string().c_str());
 	printf("Send: %s\r\n", buf.c_str());
 	printf("\r\n");
 
@@ -72,11 +72,6 @@ bool http_servlet::parse_json(acl::json& json)
 	}
 
 	if (status_.empty()  || x_.empty()) {
-		return false;
-	}
-
-	if (atoi(status_) == 7) {
-		printf("The last one\r\n");
 		return false;
 	}
 

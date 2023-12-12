@@ -22,7 +22,7 @@ static void build_one(int i, int j, acl::string& buf)
 
 	json.to_string(&buf);
 
-	printf("req: %s\r\n", buf.c_str());
+	printf("Req: %s\r\n", buf.c_str());
 }
 
 static void start_test(const char* addr, acl::sslbase_conf& ssl_conf)
@@ -43,10 +43,6 @@ static void start_test(const char* addr, acl::sslbase_conf& ssl_conf)
 
 		if (!req.request(buf, buf.size())) {
 			printf("Send request error\r\n");
-			break;
-		}
-
-		if (i == max - 1) {
 			break;
 		}
 
