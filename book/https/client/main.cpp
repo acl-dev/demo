@@ -6,42 +6,23 @@
 
 static int __rw_timeout = 10;
 
-static void build_one(int i, int j, acl::string& buf)
-{
-
-	acl::json json;
-	acl::json_node& root = json.get_root();
-
-	acl::string status, x;
-
-	status.format("%d", i);
-	x.format("%d", j);
-
-	root.add_text("status", status);
-	root.add_text("x", x);
-
-	json.to_string(&buf);
-
-	printf("Req: %s\r\n", buf.c_str());
-}
-
 static void start_test(const char* addr, acl::sslbase_conf& ssl_conf)
 {
 	acl::http_request req(addr);
 	req.set_ssl(&ssl_conf);
 
+	const char* data = "hello world!\r\n";
 	int max = 4;
 	acl::string buf;
-	for (int i = 0; i < max; i++) {
-		build_one(2 * i + 1, 10 * (2 * i + 1) + 1, buf);
 
+	for (int i = 0; i < max; i++) {
 		req.request_header().set_url("/")
 			.set_keep_alive(true)
-			.set_content_length((long long) buf.size())
+			.set_content_length((long long) strlen(data))
 			.set_content_type("text/json")
 			.set_host("test.com");
 
-		if (!req.request(buf, buf.size())) {
+		if (!req.request(data, strlen(data))) {
 			printf("Send request error\r\n");
 			break;
 		}
@@ -52,8 +33,8 @@ static void start_test(const char* addr, acl::sslbase_conf& ssl_conf)
 			break;
 		}
 
-		printf("Get: %s\r\n", buf.c_str());
-		printf("\r\n");
+		printf("Get: %s", buf.c_str());
+		fflush(stdout);
 
 		req.reset();
 		buf.clear();
