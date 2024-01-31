@@ -7,7 +7,7 @@
 
 class dispatch_accept_callback : public acl::aio_accept_callback {
 public:
-	dispatch_accept_callback(acl::aio_handle& handle) : handle_(handle) {}
+	dispatch_accept_callback() {}
 	~dispatch_accept_callback() {}
 
 	bool transfer(acl::aio_socket_stream& conn) {
@@ -40,7 +40,6 @@ protected:
 	bool accept_callback(acl::aio_socket_stream* conn);
 
 private:
-	acl::aio_handle& handle_;
 	std::set<acl::aio_socket_stream*> conns_;
 	std::set<acl::aio_socket_stream*>::iterator it_;
 };
@@ -92,9 +91,8 @@ bool dispatch_accept_callback::accept_callback(acl::aio_socket_stream* conn) {
 
 class service_accept_callback : public acl::aio_accept_callback {
 public:
-	service_accept_callback(acl::aio_handle& handle,
-		dispatch_accept_callback& dispatch)
-	: handle_(handle), dispatch_(dispatch) {}
+	service_accept_callback(dispatch_accept_callback& dispatch)
+	: dispatch_(dispatch) {}
 	~service_accept_callback() {}
 
 protected:
@@ -108,7 +106,6 @@ protected:
 	}
 
 private:
-	acl::aio_handle& handle_;
 	dispatch_accept_callback& dispatch_;
 };
 
@@ -162,7 +159,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	printf("listen on %s ok\r\n", dispatch_addr.c_str());
-	dispatch_accept_callback dispatch_handler(handle);
+	dispatch_accept_callback dispatch_handler;
 	dispatch->add_accept_callback(&dispatch_handler);
 
 	//////////////////////////////////////////////////////////////////////
@@ -177,7 +174,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("listen on %s ok\r\n", listen_addr.c_str());
 
-	service_accept_callback service_handler(handle, dispatch_handler);
+	service_accept_callback service_handler(dispatch_handler);
 	service->add_accept_callback(&service_handler);
 
 	//////////////////////////////////////////////////////////////////////
