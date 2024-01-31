@@ -21,8 +21,10 @@ public:
 		}
 
 		const char* peer = conn.get_peer(true);
-		acl_write_fd((*it_)->sock_handle(), (void*) peer,
+		int ret = acl_write_fd((*it_)->sock_handle(), (void*) peer,
 			(int) strlen(peer), conn.sock_handle());
+		printf(">>>Transfer ret=%d, %s, fd=%d\r\n",
+			ret, acl::last_serror(), conn.sock_handle());
 
 		++it_;
 
