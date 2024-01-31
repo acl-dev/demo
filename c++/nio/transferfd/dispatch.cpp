@@ -162,8 +162,8 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	printf("listen on %s ok\r\n", dispatch_addr.c_str());
-	dispatch_accept_callback dispatch_callback(handle);
-	dispatch->add_accept_callback(&dispatch_callback);
+	dispatch_accept_callback dispatch_handler(handle);
+	dispatch->add_accept_callback(&dispatch_handler);
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -177,8 +177,8 @@ int main(int argc, char* argv[]) {
 	}
 	printf("listen on %s ok\r\n", listen_addr.c_str());
 
-	service_accept_callback service_callback(handle, dispatch_callback);
-	service->add_accept_callback(&service_callback);
+	service_accept_callback service_handler(handle, dispatch_handler);
+	service->add_accept_callback(&service_handler);
 
 	//////////////////////////////////////////////////////////////////////
 
