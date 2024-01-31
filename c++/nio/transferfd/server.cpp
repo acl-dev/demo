@@ -121,13 +121,11 @@ int main(int argc, char* argv[]) {
 
 	acl::aio_handle handle(type);
 
-	acl::aio_socket_stream* conn = acl::aio_socket_stream::open
-		(&handle, server_addr, 5);
+	acl::aio_socket_stream* conn = acl::aio_socket_stream::open(&handle, server_addr, 5);
 	if (conn == NULL) {
 		printf("Connect %s error %s\r\n", server_addr.c_str(), acl::last_serror());
 		return 1;
 	}
-
 
 	transfer_callback* handler = new transfer_callback(handle, conn);
 	conn->add_close_callback(handler);
