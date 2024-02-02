@@ -42,9 +42,12 @@ public:
 		const char* peer = conn.get_peer(true);
 		int ret = acl_write_fd((*it_)->sock_handle(), (void*) peer,
 			(int) strlen(peer), conn.sock_handle());
-
-		printf(">>>Transfer ret=%d, addr=%s, fd=%d\r\n",
-			ret, peer, conn.sock_handle());
+		if (ret < 0) {
+			printf("Transfer fd error %s\r\n", acl::last_serror());
+		} else {
+			printf(">>>Transfer ret=%d, addr=%s, fd=%d\r\n",
+				ret, peer, conn.sock_handle());
+		}
 
 		++it_;
 
@@ -61,14 +64,17 @@ protected:
 	void run() {
 		while (true) {
 			acl::socket_stream* conn = ss_.accept();
-			if (conn) {
-				dispatch_conns_.insert(conn);
-				it_ = dispatch_conns_.begin();
-
-				printf("Got one server connection from %s\r\n", conn->get_peer(true));
-				acl::fiber* fb = new dispatch_checker(*this, conn);
-				fb->start();
+			if (conn == NULL) {
+				continue;
 			}
+
+			dispatch_conns_.insert(conn);
+			it_ = dispatch_conns_.begin();
+
+			printf("Got one server connection from %s\r\n",
+				conn->get_peer(true));
+			acl::fiber* fb = new dispatch_checker(*this, conn);
+			fb->start();
 		}
 	}
 
