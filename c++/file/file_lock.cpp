@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <acl-lib/acl/lib_acl.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 
 int main(void) {
@@ -12,14 +13,17 @@ int main(void) {
 		return 1;
 	}
 
-	printf("begin to lock %s\r\n", filepath);
-
-	if (!fp.lock()) {
+	if (!fp.try_lock()) {
 		printf("lock %s error=%s\r\n", filepath, acl::last_serror());
 		return 1;
 	}
 
 	printf("lock %s ok\r\n", filepath);
+
+	acl::ifstream fp2;
+	fp2.open_read(filepath);
+	fp2.close();
+
 	sleep(5);
 
 	if (!fp.unlock()) {
