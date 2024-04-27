@@ -4,19 +4,19 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/file.h>
 
-static int fcntl_lock(int fd) {
+static int fcntl_lock(int fd, int nowait) {
 	struct flock lock;
-
-	memset(&lock, 0, sizeof(lock));
 	lock.l_type   = F_WRLCK;
 	lock.l_whence = SEEK_SET;
 	lock.l_start  = 0;
 	lock.l_len    = 0;
 
-	int ret = fcntl(fd, F_SETLKW, &lock);
+	int ret = fcntl(fd, nowait ? F_SETLK : F_SETLKW, &lock);
 	if (ret == -1) {
-		printf("Lock %d error %s\r\n", fd, strerror(errno));
+		printf("%s: lock %d error %s\r\n", __FUNCTION__, fd, strerror(errno));
 		return -1;
 	}
 
@@ -24,10 +24,10 @@ static int fcntl_lock(int fd) {
 	return 0;
 }
 
-static int flock_lock(int fd) {
-	int ret = flock(fd, LOCK_EX);
+static int flock_lock(int fd, int nowait) {
+	int ret = flock(fd, nowait ? (LOCK_EX | LOCK_NB) : LOCK_EX);
 	if (ret == -1) {
-		printf("flock %d error %s\r\n", fd, strerror(errno));
+		printf("%s: flock %d error %s\r\n", __FUNCTION__, fd, strerror(errno));
 		return -1;
 	}
 
@@ -36,23 +36,33 @@ static int flock_lock(int fd) {
 }
 
 static void usage(const char *procname) {
-	printf("usage: %s -k [use flock] -o [if open file\r\n", procname);
+	printf("usage: %s -h [help]\r\n"
+		" -f [use flock]\r\n"
+		" -b [if using blocking lock]\r\n"
+		" -o [if opening file again\r\n"
+		" -c [if closing the second opened file]\r\n", procname);
 }
 
 int main(int argc, char *argv[]) {
 	const char *filename = "./dummy.lock";
-	int ch, use_flock = 0, open_read = 0;
+	int ch, use_flock = 0, nowait = 1, open_second = 0, close_second = 0;
 
-	while ((ch = getopt(argc, argv, "hko")) > 0) {
+	while ((ch = getopt(argc, argv, "hfboc")) > 0) {
 		switch (ch) {
 		case 'h':
 			usage(argv[0]);
 			return 0;
-		case 'k':
+		case 'b':
+			nowait = 0;
+			break;
+		case 'f':
 			use_flock = 1;
 			break;
 		case 'o':
-			open_read = 1;
+			open_second = 1;
+			break;
+		case 'c':
+			close_second = 1;
 			break;
 		default:
 			break;
@@ -66,32 +76,33 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (use_flock) {
-		if (flock_lock(fd) == -1) {
+		if (flock_lock(fd, nowait) == -1) {
 			close(fd);
 			return 1;
 		}
 	} else {
-		if (fcntl_lock(fd) == -1) {
+		if (fcntl_lock(fd, nowait) == -1) {
 			close(fd);
 			return 1;
 		}
 	}
 
-	int fd2 = -1;
-	if (open_read) {
-		//fd2 = open(filename, O_RDWR, 0600);
-		fd2 = open(filename, O_RDONLY, 0600);
+	if (open_second) {
+		int fd2 = open(filename, O_RDONLY, 0600);
 		if (fd2 == -1) {
 			printf("Open %s error %s\r\n", filename, strerror(errno));
 			close(fd);
 			return 1;
 		}
-		printf("Open %s ok!\r\n", filename);
+		printf("Open %s ok again!\r\n", filename);
+
+		if (close_second) {
+			close(fd2);
+			printf("Close the second opened\r\n");
+		}
 	}
 
-	sleep(10);
-
+	sleep(60);
 	close(fd);
-	close(fd2);
 	return 0;
 }
