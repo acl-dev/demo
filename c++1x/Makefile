@@ -8,17 +8,15 @@ CFLAGS = -c -g -W \
 -Werror \
 -Wshadow \
 -Wpointer-arith \
--Waggregate-return \
 -D_REENTRANT \
 -D_USE_FAST_MACRO \
--DACL_WRITEABLE_CHECK \
 -Wno-long-long \
 -Wuninitialized \
 -D_POSIX_PTHREAD_SEMANTICS \
 -Winvalid-pch \
--DACL_PREPARE_COMPILE \
--DUSE_REUSEPORT \
 -std=c++11
+
+#-Waggregate-return
 
 ldflags = -lfiber_cpp -lacl_all -lfiber -ldl -lz -lpthread 
 
@@ -38,7 +36,8 @@ BIN=bin
 $(shell mkdir -p $(BIN) )
 
 all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool \
-	tcp_server tcp_server2 tcp_client go_waiter fiber_tbox tbox
+	tcp_server tcp_server2 tcp_client go_waiter fiber_tbox tbox \
+	fiber_tbox2
 
 clean cl:
 	@(rm -f	$(BIN)/fiber_httpd)
@@ -52,6 +51,7 @@ clean cl:
 	@(rm -f $(BIN)/tcp_client)
 	@(rm -f $(BIN)/go_waiter)
 	@(rm -f $(BIN)/fiber_tbox)
+	@(rm -f $(BIN)/fiber_tbox2)
 	@(rm -f $(BIN)/tbox)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
@@ -87,6 +87,11 @@ fiber_tbox: fiber/fiber_tbox.o
 	g++ fiber/fiber_tbox.o -o $(BIN)/fiber_tbox $(ldflags)
 fiber/fiber_tbox.o: fiber/fiber_tbox.cpp
 	g++ $(CFLAGS) fiber/fiber_tbox.cpp -o fiber/fiber_tbox.o
+
+fiber_tbox2: fiber/fiber_tbox2.o
+	g++ fiber/fiber_tbox2.o -o $(BIN)/fiber_tbox2 $(ldflags)
+fiber/fiber_tbox2.o: fiber/fiber_tbox2.cpp
+	g++ $(CFLAGS) fiber/fiber_tbox2.cpp -o fiber/fiber_tbox2.o
 
 tbox: fiber/tbox.o
 	g++ fiber/tbox.o -o $(BIN)/tbox $(ldflags)
