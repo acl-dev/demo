@@ -6,34 +6,34 @@
 
 using shared_box = std::shared_ptr<acl::fiber_tbox2<int>>;
 
+const int MAX = 20;
+
 int main(void) {
-	std::thread th([] {
-		int nCount = 0;
+	shared_box box(new acl::fiber_tbox2<int>());
+	int nCount = 0;
 
-		go[&nCount] {
-			shared_box box(new acl::fiber_tbox2<int>());
-
-			go[&nCount, box] {
-				for (int i = 0; i < 10; i++) {
-					go[&nCount, box] {
-						int nVal = 0;
-						box->pop(nVal,100);
-						nCount++;
-						printf("pop one: %d\r\n", nVal);
-					};
-				}
-			};
-
-			for(int i = 0; i < 10; i++) {
-				box->push(i);
+	std::thread thr([&nCount, box] {
+		go[&nCount, box] {
+			for (int i = 0; i < MAX; i++) {
+				go[&nCount, box] {
+					int nVal = -1;
+					box->pop(nVal,100);
+					nCount++;
+					printf("fiber-%d: pop one: %d\r\n",
+						acl::fiber::self(), nVal);
+				};
 			}
-
-			//acl::fiber::delay(0);
 		};
 
 		acl::fiber::schedule();
 	});
 
-	th.join();
+	for(int i = 0; i < MAX; i++) {
+		box->push(i);
+	}
+
+	thr.join();
+	printf("nCount=%d\r\n", nCount);
+
 	return 0;
 }
