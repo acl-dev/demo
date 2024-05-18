@@ -132,7 +132,7 @@ clean cl:
 		$(BIN)/thread_fiber_redis \
 		$(BIN)/thread_fiber_client \
 		$(BIN)/thread_fiber_server \
-		$(BIN)/master_threads_echod) \
+		$(BIN)/master_threads_echod \
 		$(BIN)/json_builder)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
