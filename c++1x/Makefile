@@ -36,8 +36,8 @@ BIN=bin
 $(shell mkdir -p $(BIN) )
 
 all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool \
-	tcp_server tcp_server2 tcp_client go_waiter fiber_tbox tbox \
-	fiber_tbox2
+	tcp_server tcp_server2 tcp_client udp_server udp_client \
+	go_waiter fiber_tbox tbox fiber_tbox2
 
 clean cl:
 	@(rm -f	$(BIN)/fiber_httpd)
@@ -48,6 +48,8 @@ clean cl:
 	@(rm -f $(BIN)/thread_pool)
 	@(rm -f $(BIN)/tcp_server)
 	@(rm -f $(BIN)/tcp_server2)
+	@(rm -f $(BIN)/udp_server)
+	@(rm -f $(BIN)/udp_client)
 	@(rm -f $(BIN)/tcp_client)
 	@(rm -f $(BIN)/go_waiter)
 	@(rm -f $(BIN)/fiber_tbox)
@@ -119,3 +121,14 @@ tcp_client: net/tcp_client.o
 	g++ net/tcp_client.o -o $(BIN)/tcp_client $(ldflags)
 net/tcp_client.o: net/tcp_client.cpp
 	g++ $(CFLAGS) net/tcp_client.cpp -o net/tcp_client.o
+
+udp_server: net/udp_server.o
+	g++ net/udp_server.o -o $(BIN)/udp_server $(ldflags)
+net/udp_server.o: net/udp_server.cpp
+	g++ $(CFLAGS) net/udp_server.cpp -o net/udp_server.o
+
+udp_client: net/udp_client.o
+	g++ net/udp_client.o -o $(BIN)/udp_client $(ldflags)
+net/udp_client.o: net/udp_client.cpp
+	g++ $(CFLAGS) net/udp_client.cpp -o net/udp_client.o
+
