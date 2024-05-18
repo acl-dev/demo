@@ -61,7 +61,6 @@ int main() {
 	double cost = acl::stamp_sub(end, begin);
 	double speed = (count * 1000) / (cost > 0 ? cost : 0.0001);
 
-	printf("Total count=%zd, cost=%.2f ms, speed=%.2f\r\n",
-		count, cost, speed);
+	printf("Total=%zd, cost=%.2f ms, speed=%.2f\r\n", count, cost, speed);
 	return 0;
 }
