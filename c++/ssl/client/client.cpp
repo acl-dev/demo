@@ -39,6 +39,8 @@ static bool run(const char *addr) {
 		return false;
 	}
 
+	printf("ssl handshake from %s ok\r\n", addr);
+
 	if (conn.format("Hello world!\r\n") == -1) {
 		printf("write error %s\r\n", acl::last_serror());
 		return false;
@@ -77,8 +79,16 @@ int main() {
 		}
 		printf("Load ssl ca ok!\r\n");
 	}
+	const char *crt = "./ssl_ca.pem", *key = "./ssl_key.pem";
+	if (!ssl_conf->add_cert(crt, key, NULL)) {
+		printf("Add cert error\r\n");
+		delete ssl_conf;
+		return 1;
+	}
+	printf("Add cert ok\r\n");
 
 	const char *addr = "0.0.0.0:8288";
+	addr = "10.67.9.10:8953";
 	run(addr);
 
 	delete ssl_conf;
