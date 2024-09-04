@@ -1,10 +1,9 @@
 #include "stdafx.h"
 
-static acl::sslbase_conf* ssl_conf = NULL;
-
 class thread_client : public acl::thread {
 public:
-	thread_client(acl::socket_stream *conn) : conn_(conn) {}
+	thread_client(acl::sslbase_conf& ssl_conf, acl::socket_stream *conn)
+	: ssl_conf_(ssl_conf), conn_(conn) {}
 
 protected:
 	void *run() {
@@ -29,6 +28,7 @@ protected:
 	}
 
 private:
+	acl::sslbase_conf& ssl_conf_;
 	acl::socket_stream* conn_;
 
 	~thread_client() {
@@ -36,7 +36,7 @@ private:
 	}
 
 	bool ssl_handshake() {
-		acl::sslbase_io *ssl = ssl_conf->create(false);
+		acl::sslbase_io *ssl = ssl_conf_.create(false);
 		if (conn_->setup_hook(ssl) == ssl) {
 			printf("setup_hook ssl error\r\n");
 			return false;
@@ -69,7 +69,7 @@ int main() {
 	}
 	printf("Load ssl so ok!\r\n");
 
-	ssl_conf = new acl::openssl_conf(true);
+	acl::sslbase_conf *ssl_conf = new acl::openssl_conf(true);
 	const char *crt_file = "./ssl_crt.pem", *key_file = "./ssl_key.pem";
 	if (!ssl_conf->add_cert(crt_file, key_file)) {
 		printf("add_cert error, crt=%s, key=%s\r\n", crt_file, key_file);
@@ -94,7 +94,7 @@ int main() {
 			break;
 		}
 
-		acl::thread* thr = new thread_client(conn);
+		acl::thread* thr = new thread_client(*ssl_conf, conn);
 		thr->set_detachable(true);
 		thr->start();
 	}

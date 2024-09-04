@@ -1,10 +1,8 @@
 #include "stdafx.h"
 #include "unistd.h"
 
-static acl::sslbase_conf* ssl_conf = NULL;
-
-static bool ssl_handshake(acl::socket_stream& conn) {
-	acl::sslbase_io *ssl = ssl_conf->create(false);
+static bool ssl_handshake(acl::sslbase_conf& ssl_conf, acl::socket_stream& conn) {
+	acl::sslbase_io *ssl = ssl_conf.create(false);
 	if (conn.setup_hook(ssl) == ssl) {
 		printf("setup_hook ssl error\r\n");
 		return false;
@@ -25,17 +23,16 @@ static bool ssl_handshake(acl::socket_stream& conn) {
 	return true;
 }
 
-static bool run(const char *addr) {
+static bool run(acl::sslbase_conf& ssl_conf, const char *addr) {
 	acl::socket_stream conn;
 	if (!conn.open(addr, 10, 10)) {
-		delete ssl_conf;
 		printf("Open on %s error %s\r\n", addr, acl::last_serror());
 		return false;
 	}
 
 	printf("Open %s ok\r\n", addr);
 
-	if (!ssl_handshake(conn)) {
+	if (!ssl_handshake(ssl_conf, conn)) {
 		return false;
 	}
 
@@ -69,7 +66,7 @@ int main() {
 	}
 	printf("Load ssl so ok!\r\n");
 
-	ssl_conf = new acl::openssl_conf(false);
+	acl::sslbase_conf *ssl_conf = new acl::openssl_conf(false);
 	const char *ca_file = "./ssl_ca.pem";
 	if (access(ca_file, R_OK) == 0) {
 		if (!ssl_conf->load_ca(ca_file, NULL)) {
@@ -79,19 +76,21 @@ int main() {
 		}
 		printf("Load ssl ca ok!\r\n");
 	}
+
 	const char *crt = "./ssl_ca.pem", *key = "./ssl_key.pem";
-	if (!ssl_conf->add_cert(crt, key, NULL)) {
-		printf("Add cert error\r\n");
-		delete ssl_conf;
-		return 1;
+	if (access(crt, R_OK) == 0 && access(key, R_OK) == 0) {
+		if (!ssl_conf->add_cert(crt, key, NULL)) {
+			printf("Add cert error\r\n");
+			delete ssl_conf;
+			return 1;
+		} else {
+			printf("Add cert ok\r\n");
+		}
 	}
-	printf("Add cert ok\r\n");
 
 	const char *addr = "0.0.0.0:8288";
-	addr = "10.67.9.10:8953";
-	run(addr);
+	run(*ssl_conf, addr);
 
 	delete ssl_conf;
 	return 0;
 }
-
