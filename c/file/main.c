@@ -305,6 +305,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	printf("IO_URING_VERSION_MAJOR: %d, IO_URING_VERSION_MINOR: %d\r\n\r\n",
+		IO_URING_VERSION_MAJOR, IO_URING_VERSION_MINOR);
+
 	test_write(path, (size_t) count);
 
 	printf("========================================================\r\n");
