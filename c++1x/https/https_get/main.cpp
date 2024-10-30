@@ -24,11 +24,11 @@ static void https_get(acl::sslbase_conf& ssl_conf, const char* url)
 
 static void usage(const char* procname)
 {
-	printf("usage: %s -h [help]\r\n"
-		" -l ssl_lib_path\r\n"
-		" -u url\r\n"
-        " -D [if in debug mode]\r\n"
-		, procname);
+    printf("usage: %s -h [help]\r\n"
+            " -l ssl_lib_path\r\n"
+            " -u url\r\n"
+            " -D [if in debug mode]\r\n"
+            , procname);
 }
 
 int main(int argc, char *argv[])
