@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
-#include <acl_cpp/lib_acl.hpp>
+#include <acl-lib/acl_cpp/lib_acl.hpp>
 
 static void usage(const char *proc) {
 	printf("usage: %s -u https_url -s path_to_ssl -c path_to_crypto\r\n", proc);

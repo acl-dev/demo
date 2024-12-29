@@ -1,5 +1,6 @@
 OSNAME  = $(shell uname -s)
 OSTYPE  = $(shell uname -m)
+OSALL   = $(shell uname -a)
 ldflags =
 CFLAGS = -c -g -W \
 -O3 \
@@ -18,7 +19,7 @@ CFLAGS = -c -g -W \
 
 #-Waggregate-return
 
-ldflags = -lfiber_cpp -lacl_all -lfiber -ldl -lz -lpthread 
+ldflags = -lfiber_cpp -lacl_all -lfiber -ldl -lz -lpthread
 
 # For Darwin
 ifeq ($(findstring Darwin, $(OSNAME)), Darwin)
@@ -31,13 +32,17 @@ endif
 ifeq ($(findstring Linux, $(OSNAME)), Linux)
 endif
 
+ifeq ($(findstring WSL, $(OSALL)), WSL)
+	ldflags += -liconv
+endif
+
 BIN=bin
 
 $(shell mkdir -p $(BIN) )
 
 all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool \
 	tcp_server tcp_server2 tcp_client udp_server udp_client \
-	go_waiter fiber_tbox tbox fiber_tbox2 fiber_mutex
+	go_waiter fiber_tbox tbox fiber_tbox2 fiber_mutex fiber_sbox
 
 clean cl:
 	@(rm -f	$(BIN)/fiber_httpd)
@@ -56,6 +61,7 @@ clean cl:
 	@(rm -f $(BIN)/fiber_tbox2)
 	@(rm -f $(BIN)/tbox)
 	@(rm -f $(BIN)/fiber_mutex)
+	@(rm -f $(BIN)/fiber_sbox)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -138,3 +144,8 @@ fiber_mutex: fiber/fiber_mutex.o
 	g++ fiber/fiber_mutex.o -o $(BIN)/fiber_mutex $(ldflags)
 fiber/fiber_mutex.o: fiber/fiber_mutex.cpp
 	g++ $(CFLAGS) fiber/fiber_mutex.cpp -o fiber/fiber_mutex.o
+
+fiber_sbox: fiber/fiber_sbox.o
+	g++ fiber/fiber_sbox.o -o $(BIN)/fiber_sbox $(ldflags)
+fiber/fiber_sbox.o: fiber/fiber_sbox.cpp
+	g++ $(CFLAGS) fiber/fiber_sbox.cpp -o fiber/fiber_sbox.o

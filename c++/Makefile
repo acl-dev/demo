@@ -1,5 +1,6 @@
 OSNAME  = $(shell uname -s)
 OSTYPE  = $(shell uname -m)
+OSALL   = $(shell uname -a)
 ldflags =
 CFLAGS = -c -g -W \
 -O3 \
@@ -36,10 +37,15 @@ endif
 ifeq ($(findstring Linux, $(OSNAME)), Linux)
 endif
 
+# For WSL
+ifeq ($(findstring WSL, $(OSALL)), WSL)
+	ldflags += -liconv
+endif
+
 BIN=bin
 $(shell mkdir -p $(BIN))
 
-all:	h2b \
+all: h2b \
 	tbox \
 	zlib \
 	file_lock \

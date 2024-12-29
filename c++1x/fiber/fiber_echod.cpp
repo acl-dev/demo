@@ -20,7 +20,7 @@ int main(void) {
 			if (conn == NULL) {
 				break;
 			}
-			auto fb = go[=] {
+			auto fb2 = go[=] {
 				char buf[8192];
 				while (true) {
 					int ret = conn->read(buf, sizeof(buf), false);
@@ -33,7 +33,7 @@ int main(void) {
 				}
 				delete conn;
 			};
-            printf(">>create echo fiber-%d\r\n", acl_fiber_id(fb));
+            printf(">>create echo fiber-%d\r\n", acl_fiber_id(fb2));
 		}
 	};
     printf(">>>server fiber-%d\r\n", acl_fiber_id(fb));
