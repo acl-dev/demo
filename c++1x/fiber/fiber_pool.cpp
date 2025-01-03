@@ -90,7 +90,9 @@ int main(int argc, char *argv[]) {
     }
 
     for (int i = 0; i < 10; i++) {
-        fibers->exec(dec, std::ref(wg), std::ref(result), i);
+        fibers->exec([&wg, &result, i] {
+            dec(wg, result, i);
+        });
         wg.add(1);
     }
 
