@@ -33,15 +33,9 @@ public:
     ~fiber_pool() = default;
 
     template<class Fn, class ...Args>
-    auto exec(Fn&& fn, Args&&... args)
-        -> std::future<typename std::result_of<Fn(Args...)>::type> {
-        using return_type = typename std::result_of<Fn(Args...)>::type;
-        auto task = std::make_shared<std::packaged_task<return_type()>>(
-            std::bind(std::forward<Fn>(fn), std::forward<Args>(args)...));
-        auto res = task->get_future();
-        auto obj = [task] { (*task)(); };
+    void exec(Fn&& fn, Args&&... args) {
+        auto obj = std::bind(std::forward<Fn>(fn), std::forward<Args>(args)...);
         boxes_[next_++ % boxes_.size()]->push(obj, true);
-        return res;
     }
 
     void stop() {
