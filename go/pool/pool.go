@@ -17,35 +17,51 @@ type TaskManager struct {
 	concurrency int
 	mergeLen    int
 	delay       int
+	chanDirect  bool
 	chs         []chan *Task
 	chi         uint32
 	cancels     []context.CancelFunc
 	wg          sync.WaitGroup
 }
 
-func NewTaskManager(concurrency, bufLen, mergeLen, delay int) *TaskManager {
+func NewTaskManager(concurrency, bufLen, mergeLen, delay int, chanDirect bool) *TaskManager {
 	if concurrency <= 0 {
 		panic("concurrency must be positive")
 	}
 
 	m := &TaskManager{concurrency: concurrency, mergeLen: mergeLen,
-		delay: delay}
+		delay: delay, chanDirect: chanDirect}
 
 	for i := 0; i < concurrency; i++ {
-		ctx, cancel := context.WithCancel(context.Background())
-		m.cancels = append(m.cancels, cancel)
-
 		ch := make(chan *Task, bufLen)
 		m.chs = append(m.chs, ch)
 
 		m.wg.Add(1)
-		go m.waitAndHandle(ch, ctx)
+		if chanDirect {
+			go m.chanWait(ch)
+		} else {
+			ctx, cancel := context.WithCancel(context.Background())
+			m.cancels = append(m.cancels, cancel)
+			go m.timedWait(ch, ctx)
+		}
 	}
 
 	return m
 }
 
-func (m *TaskManager) waitAndHandle(ch chan *Task, ctx context.Context) {
+func (m *TaskManager) chanWait(ch chan *Task) {
+	for {
+		t := <-ch
+		if t == nil {
+			fmt.Println("Got nil and the coroutine is exiting")
+			m.wg.Done()
+			break
+		}
+		t.Fn(t.Args...)
+	}
+}
+
+func (m *TaskManager) timedWait(ch chan *Task, ctx context.Context) {
 	var tasks []*Task
 	var count int64
 	var delay, lastDelay int
@@ -97,8 +113,14 @@ func (m *TaskManager) AddTask(fn func(args ...interface{}),
 }
 
 func (m *TaskManager) Stop() {
-	for _, cancel := range m.cancels {
-		cancel()
+	if m.chanDirect {
+		for i := 0; i < len(m.chs); i++ {
+			m.chs[i] <- nil
+		}
+	} else {
+		for _, cancel := range m.cancels {
+			cancel()
+		}
 	}
 	m.wg.Wait()
 }

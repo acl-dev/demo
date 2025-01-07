@@ -17,12 +17,14 @@ func main() {
 	consumers := flag.Int("c", 10, "number of consumers")
 	producers := flag.Int("p", 1, "number of producers")
 	numCPU := flag.Int("k", runtime.NumCPU(), "number of CPU")
+	chanDirect := flag.Bool("D", false, "Read from channel directly, or timed read from channel by select")
+
 	flag.Parse()
 
 	runtime.GOMAXPROCS(*numCPU)
 
 	var result int64
-	manager := NewTaskManager(*consumers, *bufLen, *mergeLen, *delay)
+	manager := NewTaskManager(*consumers, *bufLen, *mergeLen, *delay, *chanDirect)
 
 	if *producers <= 0 {
 		*producers = 1
