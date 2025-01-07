@@ -85,26 +85,28 @@ int main(int argc, char *argv[]) {
     // Execute in the currecnt thread.
 
     for (int i = 0; i < 10; i++) {
-        fibers->exec(add, std::ref(wg), std::ref(result), i);
         wg.add(1);
+        fibers->exec(add, std::ref(wg), std::ref(result), i);
     }
 
     for (int i = 0; i < 10; i++) {
+        wg.add(1);
         fibers->exec([&wg, &result, i] {
             dec(wg, result, i);
         });
-        wg.add(1);
     }
 
-    fibers->exec(say, std::ref(wg), "hello");
     wg.add(1);
+    fibers->exec(say, std::ref(wg), "hello");
 
     const char* s = "zsxxsz";
-    fibers->exec(fmt_print, std::ref(wg), "You're welcome, %s!", s);
+
     wg.add(1);
+    fibers->exec(fmt_print, std::ref(wg), "You're welcome, %s!", s);
 
     //////////////////////////////////////////////////////////////////////////
 
+    wg.add(1);
     std::thread([&wg, &result] {
         for (int i = 0; i < 100; i++) {
             result++;
@@ -113,24 +115,24 @@ int main(int argc, char *argv[]) {
 
         wg.done();
     }).detach();
-    wg.add(1);
 
     //////////////////////////////////////////////////////////////////////////
     // Execute in the current thread's fibers and put by another thread.
 
+    wg.add(1);
     std::thread([&wg, &result, fibers] {
         for (int i = 0; i < 10; i++) {
-            fibers->exec(add, std::ref(wg), std::ref(result), i);
             wg.add(1);
+            fibers->exec(add, std::ref(wg), std::ref(result), i);
         }
 
         wg.done();
     }).detach();
-    wg.add(1);
 
     //////////////////////////////////////////////////////////////////////////
     // Execute in the fibers of another thread.
 
+    wg.add(1);
     std::thread([&wg, &result, buf, nfiber, timeout] {
         std::shared_ptr<fiber_pool> fbs(new fiber_pool(buf, nfiber, timeout));
         acl::wait_group wg2;
@@ -141,14 +143,13 @@ int main(int argc, char *argv[]) {
         };
 
         for (int i = 0; i < 10; i++) {
-            fbs->exec(add, std::ref(wg2), std::ref(result), i);
             wg2.add(1);
+            fbs->exec(add, std::ref(wg2), std::ref(result), i);
         }
 
         acl::fiber::schedule();
         wg.done();
     }).detach();
-    wg.add(1);
 
     //////////////////////////////////////////////////////////////////////////
 

@@ -1,14 +1,16 @@
 #pragma once
 #include <functional>
 #include <future>
+#include <vector>
 
 using task_fn = std::function<void()>;
 using box_ptr = std::shared_ptr<acl::box2<task_fn>>;
 
 class fiber_pool {
 public:
-    fiber_pool(int buf, int concurrency, int milliseconds, bool thr = false)
-    : milliseconds_(milliseconds)
+    fiber_pool(int buf, int concurrency, int ms, size_t merge_len, bool thr = false)
+    : ms_(ms)
+    , merge_len_(merge_len)
     {
         for (int i = 0; i < concurrency; i++) {
             std::shared_ptr<acl::box2<task_fn>> box;
@@ -20,8 +22,8 @@ public:
             }
 
             boxes_.push_back(box);
-
             wg_.add(1);
+
             auto fb = go[this, box] {
                 fiber_run(box);
             };
@@ -48,19 +50,39 @@ public:
 
 private:
     acl::wait_group wg_;
-    int milliseconds_;
+    int ms_;
+    size_t merge_len_ = 0;
     size_t next_ = 0;
     std::vector<box_ptr> boxes_;
     std::vector<ACL_FIBER*> fibers_;
 
     void fiber_run(const std::shared_ptr<acl::box2<task_fn>>& box) {
+        int ms = ms_;
+        std::vector<task_fn> tasks;
+
         while (true) {
             task_fn t;
-            if (box->pop(t, milliseconds_)) {
-                t();
+            if (box->pop(t, ms)) {
+                tasks.emplace_back(std::move(t));
+                if (tasks.size() < merge_len_) {
+                    ms = 0;
+                    continue;
+                }
             } else if (acl::fiber::self_killed()) {
                 break;
+            } else if (acl::last_error() == EAGAIN) {
+                if (tasks.empty()) {
+                    ms = ms_;
+                    continue;
+                }
             }
+
+            for (auto& task : tasks) {
+                task();
+            }
+
+            tasks.clear();
+            ms = ms_;
         }
 
         wg_.done();
