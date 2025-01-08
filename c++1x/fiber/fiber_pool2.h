@@ -40,7 +40,7 @@ public:
         auto obj = std::bind(std::forward<Fn>(fn), std::forward<Args>(args)...);
 	next_ %= boxes_.size();
         boxes_[next_]->push(obj, true);
-        if (buf_ > 0 && boxes_[next_++]->size() >= buf_) {
+        if (buf_ > 0 && boxes_[next_++]->size() >= (size_t) buf_) {
             acl::fiber::yield();
         }
     }
