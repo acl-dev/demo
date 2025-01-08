@@ -39,12 +39,16 @@ func main() {
 
 	begin := time.Now()
 
+	task := func() {
+		handleTask(&result, &wg)
+	}
+
 	for j := 0; j < *producers; j++ {
 		wg.Add(1)
 		go func() {
 			for i := int64(0); i < n; i++ {
 				wg.Add(1)
-				manager.AddTask(handleTask, &result, &wg)
+				manager.AddTask(task)
 			}
 
 			fmt.Printf("Send tasks over, count: %d\r\n", n)
@@ -62,13 +66,7 @@ func main() {
 	manager.Stop()
 }
 
-func handleTask(args ...interface{}) {
-	if len(args) < 2 {
-		panic("args empty")
-	}
-
-	result := args[0].(*int64)
+func handleTask(result *int64, wg *sync.WaitGroup) {
 	atomic.AddInt64(result, 1)
-	wg := args[1].(*sync.WaitGroup)
 	wg.Done()
 }

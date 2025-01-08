@@ -9,8 +9,7 @@ import (
 )
 
 type Task struct {
-	Fn   func(args ...interface{})
-	Args []interface{}
+	Fn func()
 }
 
 type TaskManager struct {
@@ -57,7 +56,7 @@ func (m *TaskManager) chanWait(ch chan *Task) {
 			m.wg.Done()
 			break
 		}
-		t.Fn(t.Args...)
+		t.Fn()
 	}
 }
 
@@ -97,16 +96,15 @@ func (m *TaskManager) timedWait(ch chan *Task, ctx context.Context) {
 		}
 
 		for _, t := range tasks {
-			t.Fn(t.Args...)
+			t.Fn()
 		}
 		tasks = tasks[:0]
 		delay = m.delay
 	}
 }
 
-func (m *TaskManager) AddTask(fn func(args ...interface{}),
-	args ...interface{}) *Task {
-	t := &Task{Fn: fn, Args: args}
+func (m *TaskManager) AddTask(fn func()) *Task {
+	t := &Task{Fn: fn}
 	i := atomic.AddUint32(&m.chi, 1) - 1
 	m.chs[i%uint32(len(m.chs))] <- t
 	return t
