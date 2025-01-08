@@ -6,10 +6,11 @@
 using task_fn = std::function<void()>;
 using box_ptr = std::shared_ptr<acl::box2<task_fn>>;
 
-class fiber_pool {
+class fiber_pool2 {
 public:
-    fiber_pool(int buf, int concurrency, int ms, size_t merge_len, bool thr = false)
-    : ms_(ms)
+    fiber_pool2(int buf, int concurrency, int ms, size_t merge_len, bool thr = false)
+    : buf_(buf)
+    , ms_(ms)
     , merge_len_(merge_len)
     {
         for (int i = 0; i < concurrency; i++) {
@@ -32,12 +33,16 @@ public:
         }
     }
 
-    ~fiber_pool() = default;
+    ~fiber_pool2() = default;
 
     template<class Fn, class ...Args>
     void exec(Fn&& fn, Args&&... args) {
         auto obj = std::bind(std::forward<Fn>(fn), std::forward<Args>(args)...);
-        boxes_[next_++ % boxes_.size()]->push(obj, true);
+	next_ %= boxes_.size();
+        boxes_[next_]->push(obj, true);
+        if (buf_ > 0 && boxes_[next_++]->size() >= buf_) {
+            acl::fiber::yield();
+        }
     }
 
     void stop() {
@@ -50,6 +55,7 @@ public:
 
 private:
     acl::wait_group wg_;
+    int buf_;
     int ms_;
     size_t merge_len_ = 0;
     size_t next_ = 0;

@@ -2,8 +2,6 @@ module gitee.com/zsxxsz/test
 
 go 1.21
 
-toolchain go1.23.2
-
 require (
 	github.com/emirpasic/gods/v2 v2.0.0-alpha
 	github.com/google/btree v1.1.3
