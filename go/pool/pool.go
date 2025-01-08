@@ -91,8 +91,8 @@ func (m *TaskManager) timedWait(ch chan *Task, ctx context.Context) {
 				delay = m.delay
 				continue
 			}
-		default:
-			continue
+//		default:
+//			continue
 		}
 
 		for _, t := range tasks {
