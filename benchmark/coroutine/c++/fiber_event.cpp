@@ -52,6 +52,20 @@ static void event_del_read(int epfd, int fd) {
 	}
 }
 
+static void set_rw_timeout(int fd, int timeout) {
+    struct timeval tm;
+    tm.tv_sec  = timeout;
+    tm.tv_usec = 0;
+
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tm, sizeof(tm)) < 0) {
+        printf("setsockopt for read error=%s, timeout=%d, fd=%d\r\n",
+            acl::last_serror(), timeout, (int) fd);
+    } else if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tm, sizeof(tm)) < 0) {
+        printf("setsockopt for send error=%s, timeout=%d, fd=%d\r\n",
+            acl::last_serror(), timeout, (int) fd);
+    }
+}
+
 static void handle_server(fiber_pool2&, int epfd, int lfd) {
     int fd = accept(lfd, nullptr, nullptr);
     if (fd < 0) {
@@ -60,6 +74,7 @@ static void handle_server(fiber_pool2&, int epfd, int lfd) {
     }
 
     printf("accept one connection, fd=%d\r\n", fd);
+    set_rw_timeout(fd, 5);
     event_add_read(epfd, fd);
     event_listen(epfd, lfd);
 }
@@ -71,10 +86,10 @@ static void handle_client(fiber_pool2& fibers, int epfd, int fd) {
         char buf[4096];
         int ret = read(fd, buf, sizeof(buf) - 1);
         if (ret <= 0) {
-            printf("close fd=%d for reading EOF\r\n", fd);
+            printf("close fd=%d for reading: %s\r\n", fd, acl::last_serror());
             close(fd);
         } else if (write(fd, buf, ret) <= 0) {
-            printf("close fd=%d for writing EOF\r\n", fd);
+            printf("close fd=%d for writing: %s\r\n", fd, acl::last_serror());
             close(fd);
         } else {
             event_add_read(epfd, fd);
@@ -119,7 +134,7 @@ int main(int argc, char *argv[]) {
 
     acl::server_socket ss(1024, false);
     if (!ss.open(addr.c_str())) {
-        printf("Open %s error %s\r\n", addr.c_str(), acl::last_serror());
+        printf("Listen %s error %s\r\n", addr.c_str(), acl::last_serror());
         return 1;
     }
 
@@ -136,7 +151,7 @@ int main(int argc, char *argv[]) {
         fibers->stop();
     };
 
-#define MAX 128
+#define MAX 256
 
     wg.add(1);
     go[fibers, &wg, &ss] {
