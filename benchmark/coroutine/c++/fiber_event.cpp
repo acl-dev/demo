@@ -60,9 +60,11 @@ static void set_rw_timeout(int fd, int timeout) {
     if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tm, sizeof(tm)) < 0) {
         printf("setsockopt for read error=%s, timeout=%d, fd=%d\r\n",
             acl::last_serror(), timeout, (int) fd);
+        exit (1);
     } else if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tm, sizeof(tm)) < 0) {
         printf("setsockopt for send error=%s, timeout=%d, fd=%d\r\n",
             acl::last_serror(), timeout, (int) fd);
+        exit (1);
     }
 }
 
@@ -79,6 +81,20 @@ static void handle_server(fiber_pool2&, int epfd, int lfd) {
     event_listen(epfd, lfd);
 }
 
+static bool write_loop(int fd, const char* buf, size_t len) {
+    const char* ptr = buf;
+    while (len > 0) {
+        int ret = write(fd, ptr, len);
+        if (ret <= 0) {
+            printf("close fd=%d for writing: %s\r\n", fd, acl::last_serror());
+            return false;
+        }
+        len -= ret;
+        ptr += ret;
+    }
+    return true;
+}
+
 static void handle_client(fiber_pool2& fibers, int epfd, int fd) {
     event_del_read(epfd, fd);
 
@@ -88,8 +104,7 @@ static void handle_client(fiber_pool2& fibers, int epfd, int fd) {
         if (ret <= 0) {
             printf("close fd=%d for reading: %s\r\n", fd, acl::last_serror());
             close(fd);
-        } else if (write(fd, buf, ret) <= 0) {
-            printf("close fd=%d for writing: %s\r\n", fd, acl::last_serror());
+        } else if (!write_loop(fd, buf, (size_t) ret)) {
             close(fd);
         } else {
             event_add_read(epfd, fd);
