@@ -11,7 +11,7 @@
 #include <acl-lib/fiber/libfiber.hpp>
 #include <acl-lib/fiber/go_fiber.hpp>
 
-#include "../../../c++1x/fiber/fiber_pool2.h"
+#include "../../../c++1x/fiber/fiber_pool.h"
 
 static void event_listen(int epfd, int lfd) {
     struct epoll_event ev;
@@ -68,14 +68,14 @@ static void set_rw_timeout(int fd, int timeout) {
     }
 }
 
-static void handle_server(fiber_pool2&, int epfd, int lfd) {
+static void handle_server(fiber_pool&, int epfd, int lfd) {
     int fd = accept(lfd, nullptr, nullptr);
     if (fd < 0) {
         printf("accept error %s\r\n", acl::last_serror());
         exit (1);
     }
 
-    printf("accept one connection, fd=%d\r\n", fd);
+    //printf("accept one connection, fd=%d\r\n", fd);
     set_rw_timeout(fd, 5);
     event_add_read(epfd, fd);
     event_listen(epfd, lfd);
@@ -95,7 +95,7 @@ static bool write_loop(int fd, const char* buf, size_t len) {
     return true;
 }
 
-static void handle_client(fiber_pool2& fibers, int epfd, int fd) {
+static void handle_client(fiber_pool& fibers, int epfd, int fd) {
     event_del_read(epfd, fd);
 
     fibers.exec([epfd, fd] {
@@ -115,16 +115,18 @@ static void handle_client(fiber_pool2& fibers, int epfd, int fd) {
 static void usage(const char *procname) {
     printf("usage: %s -h [help]\r\n"
             " -s address\r\n"
-            " -c nfiber\r\n"
+            " -L min\r\n"
+            " -H max\r\n"
             " -b buf\r\n"
             " -t timeout\r\n", procname);
 }
 
 int main(int argc, char *argv[]) {
-    int ch, nfiber = 100, buf = 500, timeout = -1;
+    int ch, buf = 500, timeout = -1;
+    size_t max = 20, min = 10;
     std::string addr("127.0.0.1:8288");
 
-    while ((ch = getopt(argc, argv, "hs:c:b:t:")) > 0) {
+    while ((ch = getopt(argc, argv, "hs:L:H:b:t:")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
@@ -132,11 +134,14 @@ int main(int argc, char *argv[]) {
             case 's':
                 addr = optarg;
                 break;
-            case 'c':
-                nfiber = atoi(optarg);
-                break;
             case 'b':
                 buf = atoi(optarg);
+                break;
+            case 'L':
+                min = (size_t) atoi(optarg);
+                break;
+            case 'H':
+                max = (size_t) atoi(optarg);
                 break;
             case 't':
                 timeout = atoi(optarg);
@@ -155,8 +160,15 @@ int main(int argc, char *argv[]) {
 
     printf("Listen %s ok\r\n", addr.c_str());
 
-    std::shared_ptr<fiber_pool2> fibers
-        (new fiber_pool2(buf, nfiber, timeout, 0, false));
+    std::shared_ptr<fiber_pool> fibers
+        (new fiber_pool(min, max, buf, timeout, 0, false));
+
+    go[fibers] {
+        while (true) {
+            acl::fiber::delay(1000);
+            fibers->status();
+        }
+    };
 
     acl::wait_group wg;
 

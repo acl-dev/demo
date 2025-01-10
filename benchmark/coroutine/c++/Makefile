@@ -45,7 +45,7 @@ ifeq ($(CHECK_JEMALLOC),yes)
 	ldflags += -ljemalloc -Wl,-rpath,$(LIBRARY_PATH)
 endif
 
-all: fiber_pool
+all: fiber_pool fiber_event
 
 clean cl:
 	@(rm -f fiber_pool fiber_event)

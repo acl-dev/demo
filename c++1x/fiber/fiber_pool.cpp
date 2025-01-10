@@ -11,7 +11,7 @@
 #include <acl-lib/fiber/libfiber.hpp>
 #include <acl-lib/fiber/go_fiber.hpp>
 
-#include "fiber_pool2.h"
+#include "fiber_pool.h"
 
 static void add(acl::wait_group& wg, std::atomic_long& result, int i) {
     result += i;;
@@ -76,8 +76,8 @@ int main(int argc, char *argv[]) {
 
     std::atomic_long result(0);
 
-    std::shared_ptr<fiber_pool2> fibers
-        (new fiber_pool2(buf, nfiber, timeout, merge_len, true));
+    std::shared_ptr<fiber_pool> fibers
+        (new fiber_pool(nfiber, nfiber, buf, timeout, merge_len, true));
     acl::wait_group wg;
 
     go[&wg, fibers] {
@@ -138,8 +138,8 @@ int main(int argc, char *argv[]) {
 
     wg.add(1);
     std::thread([&wg, &result, buf, nfiber, timeout, merge_len] {
-        std::shared_ptr<fiber_pool2> fbs
-            (new fiber_pool2(buf, nfiber, timeout, merge_len));
+        std::shared_ptr<fiber_pool> fbs
+            (new fiber_pool(nfiber, nfiber, buf, timeout, merge_len));
         acl::wait_group wg2;
 
         go[&wg2, fbs] {

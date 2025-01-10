@@ -12,7 +12,7 @@
 #include <acl-lib/fiber/libfiber.hpp>
 #include <acl-lib/fiber/go_fiber.hpp>
 
-#include "../../../c++1x/fiber/fiber_pool2.h"
+#include "../../../c++1x/fiber/fiber_pool.h"
 
 static void add(acl::wait_group& wg, std::atomic_long& result, int i) {
     result += i;;
@@ -21,7 +21,8 @@ static void add(acl::wait_group& wg, std::atomic_long& result, int i) {
 
 static void usage(const char *procname) {
     printf("usage: %s -h [help]\r\n"
-        " -c fibers\r\n"
+        " -L min\r\n"
+        " -H max\r\n"
         " -b buf\r\n"
         " -n count\r\n"
         " -t wating timeout[in milliseconds]\r\n"
@@ -30,12 +31,13 @@ static void usage(const char *procname) {
 }
 
 int main(int argc, char *argv[]) {
-    int ch, nfiber = 10, buf = 500, timeout = -1;
+    int ch, buf = 500, timeout = -1;
+    size_t max = 20, min = 10;
     size_t merge_len = 10;
     long long count = 1000;
     bool thread_safe = false;
 
-    while ((ch = getopt(argc, argv, "hb:c:n:t:m:S")) > 0) {
+    while ((ch = getopt(argc, argv, "hb:L:H:n:t:m:S")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
@@ -43,33 +45,40 @@ int main(int argc, char *argv[]) {
             case 'b':
                 buf = atoi(optarg);
                 break;
-            case 'c':
-                nfiber = atoi(optarg);
+            case 'L':
+                min = (size_t) atoi(optarg);
                 break;
-	    case 'n':
-		count = atoll(optarg);
-		break;
+            case 'H':
+                max = (size_t) atoi(optarg);
+                break;
+            case 'n':
+                count = atoll(optarg);
+                break;
             case 't':
                 timeout = atoi(optarg);
                 break;
             case 'm':
                 merge_len = (size_t) atoi(optarg);
                 break;
-	    case 'S':
+            case 'S':
                 thread_safe = true;
-		break;
+                break;
             default:
                 usage(argv[0]);
                 return 1;
         }
     }
 
+    if (min > max) {
+        max = min;
+    }
+
     //////////////////////////////////////////////////////////////////////////
 
     std::atomic_long result(0);
 
-    std::shared_ptr<fiber_pool2> fibers
-        (new fiber_pool2(buf, nfiber, timeout, merge_len, thread_safe));
+    std::shared_ptr<fiber_pool> fibers
+        (new fiber_pool(min, max, buf, timeout, merge_len, thread_safe));
     acl::wait_group wg;
 
     struct timeval begin;
