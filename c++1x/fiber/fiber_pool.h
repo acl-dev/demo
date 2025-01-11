@@ -115,6 +115,7 @@ private:
 
                 if (box_count_-- > 1) {
                     boxes_[fbox->idx] = boxes_[box_count_];
+                    boxes_[fbox->idx]->idx = fbox->idx;
                     boxes_[box_count_] = nullptr;
                 } else {
                     assert(box_count_ == 0);
