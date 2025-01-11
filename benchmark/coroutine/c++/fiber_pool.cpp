@@ -84,6 +84,17 @@ int main(int argc, char *argv[]) {
     struct timeval begin;
     gettimeofday(&begin, nullptr);
 
+    wg.add(1);
+    go[fibers, &wg, &result, count] {
+        printf("Begin add tasks ...\r\n");
+        for (long long i = 0; i < count; i++) {
+            wg.add(1);
+            fibers->exec(add, std::ref(wg), std::ref(result), 1);
+        }
+        printf("Add tasks finished!\r\n");
+	wg.done();
+    };
+
     go[&wg, fibers, count, &result, &begin] {
         printf("Wait for all tasks ...\r\n");
         wg.wait();
@@ -97,17 +108,6 @@ int main(int argc, char *argv[]) {
         printf("The result is %ld, time cost: %.2f ms, speed: %.2f qps\r\n",
             result.load(), tc, speed);
         fibers->stop();
-    };
-
-    wg.add(1);
-    go[fibers, &wg, &result, count] {
-        printf("Begin add tasks ...\r\n");
-        for (long long i = 0; i < count; i++) {
-            wg.add(1);
-            fibers->exec(add, std::ref(wg), std::ref(result), 1);
-        }
-        printf("Add tasks finished!\r\n");
-	wg.done();
     };
 
     acl::fiber::schedule();
