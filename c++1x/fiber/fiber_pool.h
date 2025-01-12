@@ -17,12 +17,10 @@ public:
 
 class fiber_pool {
 public:
-    fiber_pool(size_t min, size_t max, int buf, int ms,
-            size_t merge_len, bool thr = false)
+    fiber_pool(size_t min, size_t max, int buf, int ms, size_t merge_len = 0)
     : buf_(buf)
     , ms_(ms)
     , merge_len_(merge_len)
-    , thr_(thr)
     {
         assert(max >= min && min > 0);
         box_min_    = min;
@@ -32,6 +30,9 @@ public:
 
         fiber_create(min);
     }
+
+    fiber_pool(const fiber_pool&) = delete;
+    fiber_pool& operator=(const fiber_pool&) = delete;
 
     ~fiber_pool() {
         for (size_t i = 0; i < box_count_; i++) {
@@ -73,10 +74,9 @@ public:
 
 private:
     acl::wait_group wg_;
-    int buf_;
-    int ms_;
+    int    buf_;
+    int    ms_;
     size_t merge_len_ = 0;
-    bool thr_ = false;
 
     size_t box_min_   = 0;
     size_t box_max_   = 0;
@@ -92,15 +92,10 @@ private:
 
     void fiber_create(size_t count) {
         for (size_t i = 0; i < count; i++) {
-            acl::box2<task_fn> *box2;
+            acl::box2<task_fn>* box2;
+            box2 = new acl::fiber_sbox2<task_fn>(buf_);
 
-            if (thr_) {
-                box2 = new acl::fiber_tbox2<task_fn>;
-            } else {
-                box2 = new acl::fiber_sbox2<task_fn>(buf_);
-            }
-
-            auto *fbox = new fiber_box(box2);
+            auto* fbox = new fiber_box(box2);
 
             boxes_[box_count_] = fbox;
             fbox->idx = box_count_++;
@@ -133,7 +128,9 @@ private:
                         boxes_idle_[0] = nullptr;
                     }
                 }
+
                 delete fbox;
+                wg_.done();
             };
 
             fibers_.push_back(fb);
@@ -195,7 +192,5 @@ private:
             tasks.clear();
             ms = ms_;
         }
-
-        wg_.done();
     }
 };

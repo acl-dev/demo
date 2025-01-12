@@ -26,8 +26,7 @@ static void usage(const char *procname) {
         " -b buf\r\n"
         " -n count\r\n"
         " -t wating timeout[in milliseconds]\r\n"
-        " -m merge_len\r\n"
-        " -S [use_in different threads]\r\n", procname);
+        " -m merge_len\r\n", procname);
 }
 
 int main(int argc, char *argv[]) {
@@ -35,9 +34,8 @@ int main(int argc, char *argv[]) {
     size_t max = 20, min = 10;
     size_t merge_len = 10;
     long long count = 1000;
-    bool thread_safe = false;
 
-    while ((ch = getopt(argc, argv, "hb:L:H:n:t:m:S")) > 0) {
+    while ((ch = getopt(argc, argv, "hb:L:H:n:t:")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
@@ -57,12 +55,6 @@ int main(int argc, char *argv[]) {
             case 't':
                 timeout = atoi(optarg);
                 break;
-            case 'm':
-                merge_len = (size_t) atoi(optarg);
-                break;
-            case 'S':
-                thread_safe = true;
-                break;
             default:
                 usage(argv[0]);
                 return 1;
@@ -78,7 +70,8 @@ int main(int argc, char *argv[]) {
     std::atomic_long result(0);
 
     std::shared_ptr<fiber_pool> fibers
-        (new fiber_pool(min, max, buf, timeout, merge_len, thread_safe));
+        (new fiber_pool(min, max, buf, timeout, merge_len));
+
     acl::wait_group wg;
 
     struct timeval begin;
@@ -92,7 +85,7 @@ int main(int argc, char *argv[]) {
             fibers->exec(add, std::ref(wg), std::ref(result), 1);
         }
         printf("Add tasks finished!\r\n");
-	wg.done();
+        wg.done();
     };
 
     go[&wg, fibers, count, &result, &begin] {

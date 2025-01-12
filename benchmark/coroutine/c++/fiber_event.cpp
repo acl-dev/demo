@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
     printf("Listen %s ok\r\n", addr.c_str());
 
     std::shared_ptr<fiber_pool> fibers
-        (new fiber_pool(min, max, buf, timeout, 0, false));
+        (new fiber_pool(min, max, buf, timeout, 0));
 
     go[fibers] {
         while (true) {

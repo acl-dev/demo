@@ -45,26 +45,47 @@ static void fmt_print(acl::wait_group& wg, const char* fmt, ...) {
     wg.done();
 }
 
+struct my_task {
+    std::atomic_long res;
+    size_t max = 5;
+    std::vector<int> buff;
+    time_t last = time(nullptr);
+    time_t ts = 1;
+};
+
+static void add_bat(acl::wait_group& wg, my_task* task, int i) {
+    task->buff.push_back(i);
+    time_t now = time(nullptr);
+
+    printf("size=%zd, diff=%ld\n", task->buff.size(),
+            now - task->last);
+
+    if (task->buff.size() >= task->max || now - task->last >= task->ts) {
+        for (auto& n : task->buff) {
+            task->res += n;
+            wg.done();
+        }
+
+        printf(">>>>diff=%ld<<<\r\n", now - task->last);
+        task->last = now;
+        task->buff.clear();
+    }
+}
+
 static void usage(const char *procname) {
-    printf("usage: %s -h [help] -c fibers_count -t timeout\r\n", procname);
+    printf("usage: %s -h [help] -c fibers_count\r\n", procname);
 }
 
 int main(int argc, char *argv[]) {
-    int ch, nfiber = 10, buf = 500, timeout = -1, merge_len = 1;
+    int ch, nfiber = 10, buf = 500;
 
-    while ((ch = getopt(argc, argv, "hc:t:")) > 0) {
+    while ((ch = getopt(argc, argv, "hc:")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
                 return 0;
             case 'c':
                 nfiber = atoi(optarg);
-                break;
-            case 'm':
-                merge_len = atoi(optarg);
-                break;
-            case 't':
-                timeout = atoi(optarg);
                 break;
             default:
                 usage(argv[0]);
@@ -77,13 +98,8 @@ int main(int argc, char *argv[]) {
     std::atomic_long result(0);
 
     std::shared_ptr<fiber_pool> fibers
-        (new fiber_pool(nfiber, nfiber, buf, timeout, merge_len, true));
+        (new fiber_pool(nfiber, nfiber, buf, -1, 0));
     acl::wait_group wg;
-
-    go[&wg, fibers] {
-        wg.wait();
-        fibers->stop();
-    };
 
     //////////////////////////////////////////////////////////////////////////
     // Execute in the currecnt thread.
@@ -121,43 +137,43 @@ int main(int argc, char *argv[]) {
     }).detach();
 
     //////////////////////////////////////////////////////////////////////////
-    // Execute in the current thread's fibers and put by another thread.
-
-    wg.add(1);
-    std::thread([&wg, &result, fibers] {
-        for (int i = 0; i < 10; i++) {
-            wg.add(1);
-            fibers->exec(add, std::ref(wg), std::ref(result), i);
-        }
-
-        wg.done();
-    }).detach();
-
-    //////////////////////////////////////////////////////////////////////////
     // Execute in the fibers of another thread.
 
     wg.add(1);
-    std::thread([&wg, &result, buf, nfiber, timeout, merge_len] {
+    std::thread([&wg, &result, buf, nfiber] {
         std::shared_ptr<fiber_pool> fbs
-            (new fiber_pool(nfiber, nfiber, buf, timeout, merge_len));
+            (new fiber_pool(nfiber, nfiber, buf, 1000, 5));
         acl::wait_group wg2;
+
+        my_task task;
+        task.max  = 5;
+        task.last = time(nullptr);
+        task.ts   = 1;
+
+        for (int i = 0; i < 12; i++) {
+            wg2.add(1);
+            fbs->exec(add_bat, std::ref(wg2), &task, 1);
+        }
 
         go[&wg2, fbs] {
             wg2.wait();
             fbs->stop();
         };
 
-        for (int i = 0; i < 10; i++) {
-            wg2.add(1);
-            fbs->exec(add, std::ref(wg2), std::ref(result), i);
-        }
-
         acl::fiber::schedule();
+        printf("The result by add_bat is: %ld\r\n", task.res.load());
+        ::sleep(1);
         wg.done();
     }).detach();
 
     //////////////////////////////////////////////////////////////////////////
 
+    // Wait all fibers done.
+    go[&wg, fibers] {
+        wg.wait();
+        fibers->stop();
+    };
+ 
     struct timeval begin;
     gettimeofday(&begin, nullptr);
 
