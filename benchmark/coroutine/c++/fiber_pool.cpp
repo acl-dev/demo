@@ -67,10 +67,12 @@ int main(int argc, char *argv[]) {
 
     //////////////////////////////////////////////////////////////////////////
 
+    using task_fn = std::function<void(void)>;
+
     std::atomic_long result(0);
 
-    std::shared_ptr<fiber_pool> fibers
-        (new fiber_pool(min, max, buf, timeout, merge_len));
+    std::shared_ptr<fiber_pool<task_fn>> fibers
+        (new fiber_pool<task_fn>(min, max, buf, timeout, merge_len));
 
     acl::wait_group wg;
 
@@ -82,7 +84,7 @@ int main(int argc, char *argv[]) {
         printf("Begin add tasks ...\r\n");
         for (long long i = 0; i < count; i++) {
             wg.add(1);
-            fibers->exec(add, std::ref(wg), std::ref(result), 1);
+            fibers->exec3(add, std::ref(wg), std::ref(result), 1);
         }
         printf("Add tasks finished!\r\n");
         wg.done();

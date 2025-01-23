@@ -1,10 +1,10 @@
 #pragma once
 #include <functional>
+#include <utility>
 #include <future>
 #include <vector>
 
-using task_fn = std::function<void()>;
-
+template<class task_fn>
 class fiber_box {
 public:
     fiber_box(acl::box2<task_fn>* box2) : box(box2) {}
@@ -15,6 +15,7 @@ public:
     int  idle = -1;
 };
 
+template<class task_fn>
 class fiber_pool {
 public:
     fiber_pool(size_t min, size_t max, int buf, int ms, size_t merge_len = 0)
@@ -25,8 +26,8 @@ public:
         assert(max >= min && min > 0);
         box_min_    = min;
         box_max_    = max;
-        boxes_      = new fiber_box* [max];
-        boxes_idle_ = new fiber_box* [max];
+        boxes_      = new fiber_box<task_fn>* [max];
+        boxes_idle_ = new fiber_box<task_fn>* [max];
 
         fiber_create(min);
     }
@@ -46,15 +47,79 @@ public:
     template<class Fn, class ...Args>
     void exec(Fn&& fn, Args&&... args) {
         auto obj = std::bind(std::forward<Fn>(fn), std::forward<Args>(args)...);
-        fiber_box* fbox;
+        fiber_box<task_fn>* box;
         if (box_idle_ > 0) {
-            fbox = boxes_idle_[next_idle_++ % box_idle_];
+            box = boxes_idle_[next_idle_++ % box_idle_];
         } else {
-            fbox = boxes_[next_box_++ % box_count_];
+            box = boxes_[next_box_++ % box_count_];
         }
 
-        fbox->box->push(obj, true);
-        if (buf_ > 0 && fbox->box->size() >= (size_t) buf_) {
+        box->box->push(obj, true);
+        if (buf_ > 0 && box->box->size() >= (size_t) buf_) {
+            acl::fiber::yield();
+        }
+    }
+
+    template<class Fn, class ...Args>
+    void exec2(Fn&& fn, Args&&... args) {
+        auto obj = [fn = std::forward<Fn>(fn), tuple_args = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+            return std::apply([&fn](auto&&... args) {
+                return std::invoke(fn, std::forward<decltype(args)>(args)...);
+            }, tuple_args);
+        };
+
+        fiber_box<task_fn>* box;
+        if (box_idle_ > 0) {
+            box = boxes_idle_[next_idle_++ % box_idle_];
+        } else {
+            box = boxes_[next_box_++ % box_count_];
+        }
+
+        box->box->push(obj, true);
+        if (buf_ > 0 && box->box->size() >= (size_t) buf_) {
+            acl::fiber::yield();
+        }
+    }
+
+    template<class Fn, class ...Args>
+    void exec3(Fn&& fn, Args&&... args) {
+        auto obj = [fn = std::forward<Fn>(fn), tuple_args = std::make_tuple(std::forward<Args>(args)...)]
+           (auto&&... params) mutable {
+                return std::apply([&fn, &params...](auto&&... args) {
+                    return std::invoke(fn, std::forward<decltype(params)>(params)..., std::forward<decltype(args)>(args)...);
+                }, tuple_args);
+        };
+
+        fiber_box<task_fn>* box;
+        if (box_idle_ > 0) {
+            box = boxes_idle_[next_idle_++ % box_idle_];
+        } else {
+            box = boxes_[next_box_++ % box_count_];
+        }
+
+        box->box->push(obj, true);
+        if (buf_ > 0 && box->box->size() >= (size_t) buf_) {
+            acl::fiber::yield();
+        }
+    }
+
+    template<class Fn, class ...Args>
+    void exec4(Fn&& fn, Args&&... args) {
+        auto obj = [fn = std::forward<Fn>(fn), tuple_args = std::make_tuple(std::forward<Args>(args)...)](bool param) mutable {
+            return std::apply([&fn, &param](auto&&... args) {
+                return std::invoke(fn, param, std::forward<decltype(args)>(args)...);
+            }, tuple_args);
+        };
+
+        fiber_box<task_fn>* box;
+        if (box_idle_ > 0) {
+            box = boxes_idle_[next_idle_++ % box_idle_];
+        } else {
+            box = boxes_[next_box_++ % box_count_];
+        }
+
+        box->box->push(obj, true);
+        if (buf_ > 0 && box->box->size() >= (size_t) buf_) {
             acl::fiber::yield();
         }
     }
@@ -86,8 +151,8 @@ private:
     size_t next_box_  = 0;
     size_t next_idle_ = 0;
 
-    fiber_box **boxes_;
-    fiber_box **boxes_idle_;
+    fiber_box<task_fn> **boxes_;
+    fiber_box<task_fn> **boxes_idle_;
     std::vector<ACL_FIBER*> fibers_;
 
     void fiber_create(size_t count) {
@@ -95,7 +160,7 @@ private:
             acl::box2<task_fn>* box2;
             box2 = new acl::fiber_sbox2<task_fn>(buf_);
 
-            auto* fbox = new fiber_box(box2);
+            auto* fbox = new fiber_box<task_fn>(box2);
 
             boxes_[box_count_] = fbox;
             fbox->idx = box_count_++;
@@ -137,12 +202,13 @@ private:
         }
     }
 
-    void fiber_run(fiber_box* fbox) {
+    void fiber_run(fiber_box<task_fn>* fbox) {
         int ms = ms_;
         std::vector<task_fn> tasks;
 
         while (true) {
             task_fn t;
+
             if (fbox->box->pop(t, ms)) {
                 tasks.emplace_back(std::move(t));
                 if (tasks.size() < merge_len_) {
