@@ -13,6 +13,23 @@
 
 #include "../../../c++1x/fiber/fiber_pool.h"
 
+static bool __use_http = false;
+
+class http_servlet : public acl::HttpServlet {
+public:
+    http_servlet(acl::socket_stream* conn) : HttpServlet(conn, (acl::session*) nullptr) {}
+    ~http_servlet() override = default;
+
+    // @override
+    bool doGet(acl::HttpServletRequest& req, acl::HttpServletResponse& res) override {
+        const char data[] = "hello world!\r\n";
+        res.setContentLength(sizeof(data) - 1);
+        res.setKeepAlive(req.isKeepAlive());
+
+        return res.write(data, sizeof(data) - 1) && req.isKeepAlive();
+    }
+};
+
 static void event_listen(int epfd, int lfd) {
     struct epoll_event ev;
 
@@ -68,7 +85,9 @@ static void set_rw_timeout(int fd, int timeout) {
     }
 }
 
-static void handle_server(fiber_pool&, int epfd, int lfd) {
+using task_fn = std::function<void(void)>;
+
+static void handle_server(fiber_pool<task_fn>&, int epfd, int lfd) {
     int fd = accept(lfd, nullptr, nullptr);
     if (fd < 0) {
         printf("accept error %s\r\n", acl::last_serror());
@@ -76,7 +95,7 @@ static void handle_server(fiber_pool&, int epfd, int lfd) {
     }
 
     //printf("accept one connection, fd=%d\r\n", fd);
-    set_rw_timeout(fd, 5);
+    set_rw_timeout(fd, 60);
     event_add_read(epfd, fd);
     event_listen(epfd, lfd);
 }
@@ -95,38 +114,62 @@ static bool write_loop(int fd, const char* buf, size_t len) {
     return true;
 }
 
-static void handle_client(fiber_pool& fibers, int epfd, int fd) {
+#define MAX_CLIENT  10240
+
+static http_servlet *__clients[MAX_CLIENT];
+
+static void handle_client(fiber_pool<task_fn>& fibers, int epfd, int fd) {
     event_del_read(epfd, fd);
 
     fibers.exec([epfd, fd] {
-        char buf[4096];
-        int ret = read(fd, buf, sizeof(buf) - 1);
-        if (ret <= 0) {
-            printf("close fd=%d for reading: %s\r\n", fd, acl::last_serror());
-            close(fd);
-        } else if (!write_loop(fd, buf, (size_t) ret)) {
-            close(fd);
+        if (__use_http) {
+            http_servlet* hs = __clients[fd];
+            if (hs == nullptr) {
+                auto* conn = new acl::socket_stream();
+                conn->open(fd);
+                hs = new http_servlet(conn);
+                __clients[fd] = hs;
+            }
+
+            if (hs->doRun()) {
+                event_add_read(epfd, fd);
+            } else {
+                __clients[fd] = nullptr;
+                auto* conn = hs->getStream();
+                assert(conn);
+                delete conn;
+            }
         } else {
-            event_add_read(epfd, fd);
+            char buf[4096];
+            int ret = read(fd, buf, sizeof(buf) - 1);
+            if (ret <= 0) {
+                printf("close fd=%d for reading: %s\r\n", fd, acl::last_serror());
+                close(fd);
+            } else if (!write_loop(fd, buf, (size_t) ret)) {
+                close(fd);
+            } else {
+                event_add_read(epfd, fd);
+            }
         }
     });
 }
 
 static void usage(const char *procname) {
     printf("usage: %s -h [help]\r\n"
-            " -s address\r\n"
-            " -L min\r\n"
-            " -H max\r\n"
-            " -b buf\r\n"
-            " -t timeout\r\n", procname);
+            " -s address[default: 127.0.0.1:8288]\r\n"
+            " -L min[default: 10]\r\n"
+            " -M max[default: 100]\r\n"
+            " -b buf[default: 500]\r\n"
+            " -H [if use http, default: false]\r\n"
+            " -t fiber idle timeout in seconds[default: 10]\r\n", procname);
 }
 
 int main(int argc, char *argv[]) {
-    int ch, buf = 500, timeout = -1;
+    int ch, buf = 500, timeout = 10000;
     size_t max = 20, min = 10;
     std::string addr("127.0.0.1:8288");
 
-    while ((ch = getopt(argc, argv, "hs:L:H:b:t:")) > 0) {
+    while ((ch = getopt(argc, argv, "hs:L:M:Hb:t:")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
@@ -140,16 +183,23 @@ int main(int argc, char *argv[]) {
             case 'L':
                 min = (size_t) atoi(optarg);
                 break;
-            case 'H':
+            case 'M':
                 max = (size_t) atoi(optarg);
                 break;
+            case 'H':
+                __use_http = true;
+                break;
             case 't':
-                timeout = atoi(optarg);
+                timeout = atoi(optarg) * 1000;
                 break;
             default:
                 usage(argv[0]);
                 return 1;
         }
+    }
+
+    for (size_t i = 0; i < MAX_CLIENT; i++) {
+        __clients[i] = nullptr;
     }
 
     acl::server_socket ss(1024, false);
@@ -160,8 +210,8 @@ int main(int argc, char *argv[]) {
 
     printf("Listen %s ok\r\n", addr.c_str());
 
-    std::shared_ptr<fiber_pool> fibers
-        (new fiber_pool(min, max, buf, timeout, 0));
+    std::shared_ptr<fiber_pool<task_fn>> fibers
+        (new fiber_pool<task_fn>(min, max, buf, timeout, 0));
 
     go[fibers] {
         while (true) {

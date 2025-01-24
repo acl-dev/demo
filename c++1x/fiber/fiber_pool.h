@@ -173,7 +173,7 @@ private:
             wg_.add(1);
 
             auto fb = go[this, fbox] {
-                fiber_run(fbox);
+                fiber_run2(fbox);
 
                 if (box_count_-- > 1) {
                     boxes_[fbox->idx] = boxes_[box_count_];
@@ -215,6 +215,7 @@ private:
                     if (box_count_ > box_min_) {
                         break;
                     }
+                    continue;
                 }
             }
 

@@ -15,7 +15,7 @@ CFLAGS = -c -g -W \
 -Wuninitialized \
 -D_POSIX_PTHREAD_SEMANTICS \
 -Winvalid-pch \
--std=c++20
+-std=c++11
 
 #-Waggregate-return
 
