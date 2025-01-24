@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
         printf("Begin add tasks ...\r\n");
         for (long long i = 0; i < count; i++) {
             wg.add(1);
-            fibers->exec3(add, std::ref(wg), std::ref(result), 1);
+            fibers->exec(add, std::ref(wg), std::ref(result), 1);
         }
         printf("Add tasks finished!\r\n");
         wg.done();

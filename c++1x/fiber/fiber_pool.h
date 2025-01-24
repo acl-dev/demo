@@ -60,6 +60,7 @@ public:
         }
     }
 
+#if __cplusplus >= 201703L
     template<class Fn, class ...Args>
     void exec2(Fn&& fn, Args&&... args) {
         auto obj = [fn = std::forward<Fn>(fn), tuple_args = std::make_tuple(std::forward<Args>(args)...)]() mutable {
@@ -123,6 +124,7 @@ public:
             acl::fiber::yield();
         }
     }
+#endif
 
     void stop() {
         for (auto fb : fibers_) {
