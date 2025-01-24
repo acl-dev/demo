@@ -202,6 +202,47 @@ private:
         }
     }
 
+    void fiber_run2(fiber_box<task_fn>* fbox) {
+        while (true) {
+            task_fn t;
+
+            if (!fbox->box->pop(t, ms_)) {
+                if (acl::fiber::self_killed()) {
+                    break;
+                } else if (acl::last_error() == EAGAIN) {
+                    if (box_count_ > box_min_) {
+                        break;
+                    }
+                }
+            }
+
+            if (fbox->idle >= 0) {
+                if (box_idle_-- > 1) {
+                    boxes_idle_[fbox->idle] = boxes_idle_[box_idle_];
+                    boxes_idle_[fbox->idle]->idle = fbox->idle;
+                    boxes_idle_[box_idle_] = nullptr;
+                } else {
+                    assert(box_idle_ == 0);
+                    assert(boxes_idle_[0] == fbox);
+                    boxes_idle_[0] = nullptr;
+                }
+
+                fbox->idle = -1;
+            }
+
+            if (box_idle_ == 0 && box_count_ < box_max_) {
+                fiber_create(1);
+            }
+
+            t();
+
+            assert(box_idle_ < box_count_);
+
+            fbox->idle = box_idle_;
+            boxes_idle_[box_idle_++] = fbox;
+        }
+    }
+
     void fiber_run(fiber_box<task_fn>* fbox) {
         int ms = ms_;
         std::vector<task_fn> tasks;
@@ -229,7 +270,7 @@ private:
             }
 
             if (fbox->idle >= 0) {
-                if (box_idle_-- > 1) {
+                if (--box_idle_ > 0) {
                     boxes_idle_[fbox->idle] = boxes_idle_[box_idle_];
                     boxes_idle_[fbox->idle]->idle = fbox->idle;
                     boxes_idle_[box_idle_] = nullptr;
