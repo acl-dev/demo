@@ -76,9 +76,12 @@ int main(int argc, char *argv[]) {
 
     std::shared_ptr<std::atomic_long> result(new std::atomic_long(0));
 
-    go[] {
-        while (true) { ::sleep(1); }
-    };
+    if (shared) {
+        // Avoid crash on Mac when using shared fibers mode.
+        go[] {
+            //while (true) { ::sleep(1); }
+        };
+    }
 
     std::shared_ptr<fiber_pool<task_fn>> fibers
         (new fiber_pool<task_fn>(min, max, buf, timeout, merge_len, shared));
