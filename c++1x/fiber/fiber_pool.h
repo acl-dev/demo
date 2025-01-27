@@ -18,10 +18,11 @@ public:
 template<class task_fn>
 class fiber_pool {
 public:
-    fiber_pool(size_t min, size_t max, int buf, int ms, size_t merge_len = 0)
+    fiber_pool(size_t min, size_t max, int buf, int ms, size_t merge_len = 0, bool shared = false)
     : buf_(buf)
     , ms_(ms)
     , merge_len_(merge_len)
+    , shared_(shared)
     {
         assert(max >= min && min > 0);
         box_min_    = min;
@@ -144,6 +145,7 @@ private:
     int    buf_;
     int    ms_;
     size_t merge_len_ = 0;
+    bool   shared_    = false;
 
     size_t box_min_   = 0;
     size_t box_max_   = 0;
@@ -172,39 +174,49 @@ private:
 
             wg_.add(1);
 
-            auto fb = go[this, fbox] {
-                fiber_run2(fbox);
-
-                if (box_count_-- > 1) {
-                    boxes_[fbox->idx] = boxes_[box_count_];
-                    boxes_[fbox->idx]->idx = fbox->idx;
-                    boxes_[box_count_] = nullptr;
-                } else {
-                    assert(box_count_ == 0);
-                    boxes_[box_count_] = nullptr;
-                }
-
-                if (fbox->idle >= 0) {
-                    if (box_idle_-- > 1) {
-                        boxes_idle_[fbox->idle] = boxes_idle_[box_idle_];
-                        boxes_idle_[fbox->idle]->idle = fbox->idle;
-                        boxes_idle_[box_idle_] = nullptr;
-                    } else {
-                        assert(box_idle_ == 0);
-                        assert(boxes_idle_[0] == fbox);
-                        boxes_idle_[0] = nullptr;
-                    }
-                }
-
-                delete fbox;
-                wg_.done();
-            };
-
-            fibers_.push_back(fb);
+            if (shared_) {
+                auto fb = go_share(4096)[this, fbox] {
+                    fiber_run(fbox);
+                };
+                fibers_.push_back(fb);
+            } else {
+                auto fb = go[this, fbox] {
+                    fiber_run(fbox);
+                };
+                fibers_.push_back(fb);
+            }
         }
     }
 
-    void fiber_run2(fiber_box<task_fn>* fbox) {
+    void fiber_run(fiber_box<task_fn>* fbox) {
+        run2(fbox);
+
+        if (box_count_-- > 1) {
+            boxes_[fbox->idx] = boxes_[box_count_];
+            boxes_[fbox->idx]->idx = fbox->idx;
+            boxes_[box_count_] = nullptr;
+        } else {
+            assert(box_count_ == 0);
+            boxes_[box_count_] = nullptr;
+        }
+
+        if (fbox->idle >= 0) {
+            if (box_idle_-- > 1) {
+                boxes_idle_[fbox->idle] = boxes_idle_[box_idle_];
+                boxes_idle_[fbox->idle]->idle = fbox->idle;
+                boxes_idle_[box_idle_] = nullptr;
+            } else {
+                assert(box_idle_ == 0);
+                assert(boxes_idle_[0] == fbox);
+                boxes_idle_[0] = nullptr;
+            }
+        }
+
+        delete fbox;
+        wg_.done();
+    }
+
+    void run2(fiber_box<task_fn>* fbox) {
         while (true) {
             task_fn t;
 
@@ -246,7 +258,7 @@ private:
         }
     }
 
-    void fiber_run(fiber_box<task_fn>* fbox) {
+    void run(fiber_box<task_fn>* fbox) {
         int ms = ms_;
         std::vector<task_fn> tasks;
 
