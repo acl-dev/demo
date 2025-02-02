@@ -78,18 +78,13 @@ int main(int argc, char *argv[]) {
 
     if (shared) {
         // Avoid crash on Mac when using shared fibers mode.
-        go[] {
-            //while (true) { ::sleep(1); }
-        };
+        go[] {};
     }
 
     std::shared_ptr<fiber_pool<task_fn>> fibers
         (new fiber_pool<task_fn>(min, max, buf, timeout, merge_len, shared));
 
     std::shared_ptr<acl::wait_group> wg(new acl::wait_group);
-
-    struct timeval begin;
-    gettimeofday(&begin, nullptr);
 
     acl::wait_group* w = wg.get();
     w->add(1);
@@ -105,8 +100,10 @@ int main(int argc, char *argv[]) {
         w->done();
     };
 
-    go[w, fibers, count, res, &begin] {
-        (void) w;
+    go[w, fibers, count, res] {
+        struct timeval begin;
+        gettimeofday(&begin, nullptr);
+
         printf("Wait for all tasks ...\r\n");
         w->wait();
         printf("All tasks finished!\r\n");
