@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <unistd.h>
 #include <getopt.h>
 #include <sys/epoll.h>
 #include <string>
@@ -83,7 +84,7 @@ static void set_rw_timeout(int fd, int timeout) {
 
 using task_fn = std::function<void(void)>;
 
-static void handle_server(fiber_pool<task_fn>&, int epfd, int lfd) {
+static void handle_server(acl::fiber_pool&, int epfd, int lfd) {
     int fd = accept(lfd, nullptr, nullptr);
     if (fd < 0) {
         printf("accept error %s\r\n", acl::last_serror());
@@ -114,7 +115,7 @@ static bool write_loop(int fd, const char* buf, size_t len) {
 
 static http_servlet *__clients[MAX_CLIENT];
 
-static void handle_client(fiber_pool<task_fn>& fibers, int epfd, int fd) {
+static void handle_client(acl::fiber_pool& fibers, int epfd, int fd) {
     event_del_read(epfd, fd);
 
     fibers.exec([epfd, fd] {
