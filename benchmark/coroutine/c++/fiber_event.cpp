@@ -7,11 +7,7 @@
 #include <memory>
 
 #include <acl-lib/acl_cpp/lib_acl.hpp>
-#include <acl-lib/fiber/libfiber.h>
 #include <acl-lib/fiber/libfiber.hpp>
-#include <acl-lib/fiber/go_fiber.hpp>
-
-#include "../../../c++1x/fiber/fiber_pool.h"
 
 static bool __use_http = false;
 
@@ -210,13 +206,15 @@ int main(int argc, char *argv[]) {
 
     printf("Listen %s ok\r\n", addr.c_str());
 
-    std::shared_ptr<fiber_pool<task_fn>> fibers
-        (new fiber_pool<task_fn>(min, max, buf, timeout, 0));
+    std::shared_ptr<acl::fiber_pool> fibers
+        (new acl::fiber_pool(min, max, timeout, buf, 64000));
 
     go[fibers] {
         while (true) {
             acl::fiber::delay(1000);
-            fibers->status();
+            printf("box_min: %zd, box_max: %zd, box_count: %zd, box_idle: %zd\r\n",
+                    fibers->get_box_min(), fibers->get_box_max(),
+                    fibers->get_box_count(), fibers->get_box_idle());
         }
     };
 

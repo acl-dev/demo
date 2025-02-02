@@ -8,11 +8,7 @@
 #include <thread>
 
 #include <acl-lib/acl_cpp/lib_acl.hpp>
-#include <acl-lib/fiber/libfiber.h>
 #include <acl-lib/fiber/libfiber.hpp>
-#include <acl-lib/fiber/go_fiber.hpp>
-
-#include "../../../c++1x/fiber/fiber_pool.h"
 
 static void add(acl::wait_group* wg, std::atomic_long* result, int i) {
     *result += i;;
@@ -27,13 +23,12 @@ static void usage(const char *procname) {
         " -n count\r\n"
         " -t wating timeout[in milliseconds]\r\n"
         " -S [shared fibers]\r\n"
-        " -m merge_len\r\n", procname);
+        , procname);
 }
 
 int main(int argc, char *argv[]) {
     int ch, buf = 500, timeout = -1;
     size_t max = 20, min = 10;
-    size_t merge_len = 10;
     long long count = 1000;
     bool shared = false;
 
@@ -72,40 +67,35 @@ int main(int argc, char *argv[]) {
 
     //////////////////////////////////////////////////////////////////////////
 
-    using task_fn = std::function<void(void)>;
-
-    std::shared_ptr<std::atomic_long> result(new std::atomic_long(0));
-
     if (shared) {
         // Avoid crash on Mac when using shared fibers mode.
         go[] {};
     }
 
-    std::shared_ptr<fiber_pool<task_fn>> fibers
-        (new fiber_pool<task_fn>(min, max, buf, timeout, merge_len, shared));
+    std::shared_ptr<acl::fiber_pool> fibers
+        (new acl::fiber_pool(min, max, timeout, buf, 32000, shared));
 
     std::shared_ptr<acl::wait_group> wg(new acl::wait_group);
+    std::shared_ptr<std::atomic_long> result(new std::atomic_long(0));
 
-    acl::wait_group* w = wg.get();
-    w->add(1);
-    std::atomic_long* res = result.get();
+    wg->add(1);
 
-    go[fibers, w, res, count] {
+    go[fibers, wg, result, count] {
         printf("Begin add tasks ...\r\n");
         for (long long i = 0; i < count; i++) {
-            w->add(1);
-            fibers->exec(add, w, res, 1);
+            wg->add(1);
+            fibers->exec(add, wg.get(), result.get(), 1);
         }
         printf("Add tasks finished!\r\n");
-        w->done();
+        wg->done();
     };
 
-    go[w, fibers, count, res] {
+    go[wg, fibers, count, result] {
         struct timeval begin;
         gettimeofday(&begin, nullptr);
 
         printf("Wait for all tasks ...\r\n");
-        w->wait();
+        wg->wait();
         printf("All tasks finished!\r\n");
 
         struct timeval end;
@@ -114,7 +104,7 @@ int main(int argc, char *argv[]) {
         double speed = (count * 1000) / (tc > 0 ? tc : 0.001);
 
         printf("The result is %ld, time cost: %.2f ms, speed: %.2f qps\r\n",
-            res->load(), tc, speed);
+            result->load(), tc, speed);
         fibers->stop();
     };
 
