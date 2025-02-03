@@ -11,10 +11,12 @@
 #include <acl-lib/fiber/libfiber.hpp>
 
 static bool __use_http = false;
+static int  __delay = 0;
 
 class http_servlet : public acl::HttpServlet {
 public:
-    http_servlet(acl::socket_stream* conn) : HttpServlet(conn, (acl::session*) nullptr) {}
+    http_servlet(acl::socket_stream* conn)
+    : HttpServlet(conn, (acl::session*) nullptr) {}
     ~http_servlet() override = default;
 
     // @override
@@ -23,6 +25,9 @@ public:
         res.setContentLength(sizeof(data) - 1);
         res.setKeepAlive(req.isKeepAlive());
 
+        if (__delay > 0) {
+            acl::fiber::delay(__delay);
+        }
         return res.write(data, sizeof(data) - 1) && req.isKeepAlive();
     }
 };
@@ -158,6 +163,7 @@ static void usage(const char *procname) {
             " -M max[default: 100]\r\n"
             " -b buf[default: 500]\r\n"
             " -H [if use http, default: false]\r\n"
+            " -d delay in ms[default: 0]\r\n"
             " -t fiber idle timeout in seconds[default: 10]\r\n", procname);
 }
 
@@ -166,7 +172,7 @@ int main(int argc, char *argv[]) {
     size_t max = 20, min = 10;
     std::string addr("127.0.0.1:8288");
 
-    while ((ch = getopt(argc, argv, "hs:L:M:Hb:t:")) > 0) {
+    while ((ch = getopt(argc, argv, "hs:L:M:Hb:t:d:")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
@@ -188,6 +194,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 't':
                 timeout = atoi(optarg) * 1000;
+                break;
+            case 'd':
+                __delay = atoi(optarg);
                 break;
             default:
                 usage(argv[0]);
