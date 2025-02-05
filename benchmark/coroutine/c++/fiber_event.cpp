@@ -96,7 +96,8 @@ static void handle_server(acl::fiber_pool&, int epfd, int lfd) {
         exit (1);
     }
 
-    //printf("accept one connection, fd=%d\r\n", fd);
+    printf("accept one connection, fd=%d\r\n", fd);
+
     set_rw_timeout(fd, 60);
     event_add_read(epfd, fd);
     event_listen(epfd, lfd);
