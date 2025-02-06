@@ -98,7 +98,7 @@ static void handle_server(acl::fiber_pool&, int epfd, int lfd) {
 
     printf("accept one connection, fd=%d\r\n", fd);
 
-    set_rw_timeout(fd, 60);
+    set_rw_timeout(fd, 5);
     event_add_read(epfd, fd);
     event_listen(epfd, lfd);
 }
@@ -141,6 +141,7 @@ static void handle_client(acl::fiber_pool& fibers, int epfd, int fd) {
                 auto* conn = hs->getStream();
                 assert(conn);
                 delete conn;
+                delete hs;
             }
         } else {
             char buf[4096];
@@ -165,15 +166,22 @@ static void usage(const char *procname) {
             " -b buf[default: 500]\r\n"
             " -H [if use http, default: false]\r\n"
             " -d delay in ms[default: 0]\r\n"
-            " -t fiber idle timeout in seconds[default: 10]\r\n", procname);
+            " -t fiber idle timeout in seconds[default: 10]\r\n"
+            " -F [if using fiber to listen, default: false]\r\n"
+            " -z stack_size[default: 64000]\r\n"
+            " -S [if using sharing fibers, default: false]\r\n"
+            , procname);
 }
 
 int main(int argc, char *argv[]) {
     int ch, buf = 500, timeout = 10000;
     size_t max = 20, min = 10;
     std::string addr("127.0.0.1:8288");
+    bool listen_fiber = false;
+    int stack_size = 6400;
+    bool stack_share = false;
 
-    while ((ch = getopt(argc, argv, "hs:L:M:Hb:t:d:")) > 0) {
+    while ((ch = getopt(argc, argv, "hs:L:M:Hb:t:d:Fz:S")) > 0) {
         switch (ch) {
             case 'h':
                 usage(argv[0]);
@@ -199,6 +207,15 @@ int main(int argc, char *argv[]) {
             case 'd':
                 __delay = atoi(optarg);
                 break;
+            case 'F':
+                listen_fiber = true;
+                break;
+            case 'z':
+                stack_size = atoi(optarg);
+                break;
+            case 'S':
+                stack_share = true;
+                break;
             default:
                 usage(argv[0]);
                 return 1;
@@ -209,7 +226,7 @@ int main(int argc, char *argv[]) {
         __clients[i] = nullptr;
     }
 
-    acl::server_socket ss(1024, false);
+    acl::server_socket ss(0, 256);
     if (!ss.open(addr.c_str())) {
         printf("Listen %s error %s\r\n", addr.c_str(), acl::last_serror());
         return 1;
@@ -218,7 +235,7 @@ int main(int argc, char *argv[]) {
     printf("Listen %s ok\r\n", addr.c_str());
 
     std::shared_ptr<acl::fiber_pool> fibers
-        (new acl::fiber_pool(min, max, timeout, buf, 64000));
+        (new acl::fiber_pool(min, max, timeout, buf, stack_size, stack_share));
 
     go[fibers] {
         while (true) {
@@ -240,11 +257,29 @@ int main(int argc, char *argv[]) {
 #define MAX 256
 
     wg.add(1);
-    go[fibers, &wg, &ss] {
+    go[fibers, &wg, &ss, listen_fiber] {
         int epfd = epoll_create(1024), lfd = ss.sock_handle();
         struct epoll_event events[MAX];
 
-        event_listen(epfd, lfd);
+        if (listen_fiber) {
+            go[epfd, lfd] {
+                printf("Use fiber to accept connection...\r\n");
+                while (true) {
+                    int fd = accept(lfd, nullptr, nullptr);
+                    if (fd < 0) {
+                        printf("accept error %s\r\n", acl::last_serror());
+                        exit(1);
+                    }
+
+                    printf("accept one fd=%d\r\n", fd);
+
+                    set_rw_timeout(fd, 5);
+                    event_add_read(epfd, fd);
+                }
+            };
+        } else {
+            event_listen(epfd, lfd);
+        }
 
         while (true) {
             int nfds = epoll_wait(epfd, events, MAX, -1);
