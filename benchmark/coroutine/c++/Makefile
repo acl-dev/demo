@@ -19,7 +19,7 @@ CFLAGS = -c -g -W \
 
 #-Waggregate-return
 
-ldflags = -lfiber_cpp -lacl_all -lfiber -ldl -lz -lpthread
+ldflags = -lfiber_cpp -lacl_all -lfiber
 
 # For Darwin
 ifeq ($(findstring Darwin, $(OSNAME)), Darwin)
@@ -45,7 +45,9 @@ ifeq ($(CHECK_JEMALLOC),yes)
 	ldflags += -ljemalloc -Wl,-rpath,$(LIBRARY_PATH)
 endif
 
-all: fiber_pool fiber_event
+ldflags += -ldl -lz -lpthread
+
+all: fiber_pool fiber_event event_server
 
 clean cl:
 	@(rm -f fiber_pool fiber_event)
@@ -61,3 +63,8 @@ fiber_event: fiber_event.o
 	g++ fiber_event.o -o fiber_event $(ldflags)
 fiber_event.o: fiber_event.cpp
 	g++ $(CFLAGS) fiber_event.cpp -o fiber_event.o
+
+event_server: event_server.o
+	g++ event_server.o -o event_server -lnet_event $(ldflags)
+event_server.o: event_server.cpp
+	g++ $(CFLAGS) event_server.cpp -o event_server.o
