@@ -47,10 +47,10 @@ endif
 
 ldflags += -ldl -lz -lpthread
 
-all: fiber_pool fiber_event event_server
+all: fiber_pool fiber_event event_server uv_server
 
 clean cl:
-	@(rm -f fiber_pool fiber_event)
+	@(rm -f fiber_pool fiber_event uv_server)
 	@(rm -f *.o)
 	@echo "All have been removed!"
 
@@ -68,3 +68,8 @@ event_server: event_server.o
 	g++ event_server.o -o event_server -lnet_event $(ldflags)
 event_server.o: event_server.cpp
 	g++ $(CFLAGS) event_server.cpp -o event_server.o
+
+uv_server: uv_server.o
+	g++ uv_server.o -o uv_server -luv $(ldflags)
+uv_server.o: uv_server.cpp
+	g++ $(CFLAGS) uv_server.cpp -o uv_server.o
