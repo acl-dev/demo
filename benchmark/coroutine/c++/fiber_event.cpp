@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     size_t max = 20, min = 10;
     std::string addr("127.0.0.1:8288");
     bool listen_fiber = false;
-    int stack_size = 6400;
+    int stack_size = 64000;
     bool stack_share = false;
 
     while ((ch = getopt(argc, argv, "hs:L:M:Hb:t:d:Fz:S")) > 0) {
