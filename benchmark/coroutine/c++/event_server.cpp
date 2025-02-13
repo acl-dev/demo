@@ -42,10 +42,12 @@ static void read_callback(NET_EVENT *ev, NET_FILE *fe) {
 	char buf[1024];
 	int ret = read(fe->fd, buf, sizeof(buf));
 	if (ret <= 0) {
+        printf("Read error, close fd: %d\r\n", fe->fd);
 		net_event_close(ev, fe);
 		close(fe->fd);
 		net_file_free(fe);
 	} else if (write(fe->fd, buf, ret) <= 0) {
+        printf("Write error, close fd: %d\r\n", fe->fd);
 		net_event_close(ev, fe);
 		close(fe->fd);
 		net_file_free(fe);
@@ -56,15 +58,19 @@ static void listen_callback(NET_EVENT *ev, NET_FILE *fe) {
 	struct sockaddr_in sa;
 	socklen_t len = (socklen_t) sizeof(sa);
 	memset(&sa, 0, sizeof(sa));
-	socket_t cfd = accept(fe->fd, (struct sockaddr*) &sa, &len);
-	if (cfd == -1) {
+	socket_t fd = accept(fe->fd, (struct sockaddr*) &sa, &len);
+	if (fd == -1) {
 		printf("accept error %s\r\n", strerror(errno));
 	} else {
-		printf("accept one fd %d\r\n", cfd);
-		net_non_blocking(cfd, 1);
-		net_tcp_nodelay(cfd, 1);
-		fe = net_file_alloc(cfd);
-		net_event_add_read(ev, fe, read_callback);
+		printf("accept one fd %d\r\n", fd);
+		net_non_blocking(fd, 1);
+		net_tcp_nodelay(fd, 1);
+		fe = net_file_alloc(fd);
+		if (!net_event_add_read(ev, fe, read_callback)) {
+            printf("Add event read error for fd: %d\r\n", fd);
+            close(fd);
+            net_file_free(fe);
+        }
 	}
 }
 
@@ -85,12 +91,21 @@ static void run(int lfd, int event_type, int event_max, bool fiber_mode) {
                 net_non_blocking(fd, 1);
                 net_tcp_nodelay(fd, 1);
                 NET_FILE *fe = net_file_alloc(fd);
-                net_event_add_read(ev, fe, read_callback);
+                if (!net_event_add_read(ev, fe, read_callback)) {
+                    printf("Add event read error for fd: %d\r\n", fd);
+                    close(fd);
+                    net_file_free(fe);
+                }
             }
         };
     } else {
         NET_FILE *fe = net_file_alloc(lfd);
-        net_event_add_read(ev, fe, listen_callback);
+        if (!net_event_add_read(ev, fe, listen_callback)) {
+            printf("Add event read error for listen fd: %d\r\n", lfd);
+            close(lfd);
+            net_file_free(fe);
+            return;
+        }
     }
 
 	while (1) {
@@ -102,14 +117,14 @@ static void usage(const char *procname) {
 	printf("usage: %s -s listen_ip\r\n"
 		" -p listen_port\r\n"
 		" -t event_type[kernel|poll|select]\r\n"
-        " -m event_maxsize[default: 1024]\r\n"
+        " -m file_max[default: 10240]\r\n"
         " -F [if using fiber mode, default: false]\r\n"
         " -f fiber_event[kernel|poll|select, default: kernel]\r\n"
 		, procname);
 }
 
 int main(int argc, char *argv[]) {
-	int ch, port = 8088, event_type = NET_EVENT_TYPE_KERNEL, event_max = 1024;
+	int ch, port = 8388, event_type = NET_EVENT_TYPE_KERNEL, file_max = 10240;
 	char addr[64];
     bool fiber_mode = false;
     acl::fiber_event_t fiber_event = acl::FIBER_EVENT_T_KERNEL;
@@ -137,7 +152,7 @@ int main(int argc, char *argv[]) {
             }
 			break;
         case 'm':
-            event_max = atoi(optarg);
+            file_max = atoi(optarg);
             break;
         case 'F':
             fiber_mode = true;
@@ -164,17 +179,19 @@ int main(int argc, char *argv[]) {
 
 	printf("listen on %s:%d\r\n", addr, port);
 
+    net_event_debug(1);
+
     if (fiber_mode) {
         printf("Run event_server in fiber mode...\r\n");
-        go[lfd, event_type, event_max] {
-            run(lfd, event_type, event_max, true);
+        go[lfd, event_type, file_max] {
+            run(lfd, event_type, file_max, true);
         };
 
         acl::fiber::share_epoll(true);
         acl::fiber::schedule(fiber_event);
     } else {
         printf("Run event_server in aio mode...\r\n");
-        run(lfd, event_type, event_max, false);
+        run(lfd, event_type, file_max, false);
     }
 
 	return 0;
