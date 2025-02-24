@@ -65,7 +65,7 @@ fiber_event.o: fiber_event.cpp
 	g++ $(CFLAGS) fiber_event.cpp -o fiber_event.o
 
 event_server: event_server.o
-	g++ event_server.o -o event_server -lnet_event $(ldflags)
+	g++ event_server.o -o event_server -lnio $(ldflags)
 event_server.o: event_server.cpp
 	g++ $(CFLAGS) event_server.cpp -o event_server.o
 

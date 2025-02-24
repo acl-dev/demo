@@ -10,8 +10,8 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
-#include <net_event/net_event.h>
-#include <net_event/net_iostuff.h>
+#include <nio/nio_event.h>
+#include <nio/nio_iostuff.h>
 #include <acl-lib/acl_cpp/lib_acl.hpp>
 #include <acl-lib/fiber/libfiber.hpp>
 
@@ -38,23 +38,23 @@ static socket_t listen_addr(const char *ip, int port) {
 	return lfd;
 }
 
-static void read_callback(NET_EVENT *ev, NET_FILE *fe) {
+static void read_callback(NIO_EVENT *ev, NIO_FILE *fe) {
 	char buf[1024];
 	int ret = read(fe->fd, buf, sizeof(buf));
 	if (ret <= 0) {
         printf("Read error, close fd: %d\r\n", fe->fd);
-		net_event_close(ev, fe);
+		nio_event_close(ev, fe);
 		close(fe->fd);
-		net_file_free(fe);
+		nio_file_free(fe);
 	} else if (write(fe->fd, buf, ret) <= 0) {
         printf("Write error, close fd: %d\r\n", fe->fd);
-		net_event_close(ev, fe);
+		nio_event_close(ev, fe);
 		close(fe->fd);
-		net_file_free(fe);
+		nio_file_free(fe);
 	}
 }
 
-static void listen_callback(NET_EVENT *ev, NET_FILE *fe) {
+static void listen_callback(NIO_EVENT *ev, NIO_FILE *fe) {
 	struct sockaddr_in sa;
 	socklen_t len = (socklen_t) sizeof(sa);
 	memset(&sa, 0, sizeof(sa));
@@ -63,19 +63,19 @@ static void listen_callback(NET_EVENT *ev, NET_FILE *fe) {
 		printf("accept error %s\r\n", strerror(errno));
 	} else {
 		printf("accept one fd %d\r\n", fd);
-		net_non_blocking(fd, 1);
-		net_tcp_nodelay(fd, 1);
-		fe = net_file_alloc(fd);
-		if (!net_event_add_read(ev, fe, read_callback)) {
+		nio_non_blocking(fd, 1);
+		nio_tcp_nodelay(fd, 1);
+		fe = nio_file_alloc(fd);
+		if (!nio_event_add_read(ev, fe, read_callback)) {
             printf("Add event read error for fd: %d\r\n", fd);
             close(fd);
-            net_file_free(fe);
+            nio_file_free(fe);
         }
 	}
 }
 
 static void run(int lfd, int event_type, int event_max, bool fiber_mode) {
-	NET_EVENT *ev = net_event_create(event_max, event_type);
+	NIO_EVENT *ev = nio_event_create(event_max, event_type);
 	assert(ev);
 
     if (fiber_mode) {
@@ -88,28 +88,28 @@ static void run(int lfd, int event_type, int event_max, bool fiber_mode) {
                 }
 
                 printf("accept one fd %d\r\n", fd);
-                net_non_blocking(fd, 1);
-                net_tcp_nodelay(fd, 1);
-                NET_FILE *fe = net_file_alloc(fd);
-                if (!net_event_add_read(ev, fe, read_callback)) {
+                nio_non_blocking(fd, 1);
+                nio_tcp_nodelay(fd, 1);
+                NIO_FILE *fe = nio_file_alloc(fd);
+                if (!nio_event_add_read(ev, fe, read_callback)) {
                     printf("Add event read error for fd: %d\r\n", fd);
                     close(fd);
-                    net_file_free(fe);
+                    nio_file_free(fe);
                 }
             }
         };
     } else {
-        NET_FILE *fe = net_file_alloc(lfd);
-        if (!net_event_add_read(ev, fe, listen_callback)) {
+        NIO_FILE *fe = nio_file_alloc(lfd);
+        if (!nio_event_add_read(ev, fe, listen_callback)) {
             printf("Add event read error for listen fd: %d\r\n", lfd);
             close(lfd);
-            net_file_free(fe);
+            nio_file_free(fe);
             return;
         }
     }
 
 	while (1) {
-		net_event_wait(ev, 1000);
+		nio_event_wait(ev, 1000);
 	}
 }
 
@@ -124,7 +124,7 @@ static void usage(const char *procname) {
 }
 
 int main(int argc, char *argv[]) {
-	int ch, port = 8388, event_type = NET_EVENT_TYPE_KERNEL, file_max = 10240;
+	int ch, port = 8388, event_type = NIO_EVENT_TYPE_KERNEL, file_max = 10240;
 	char addr[64];
     bool fiber_mode = false;
     acl::fiber_event_t fiber_event = acl::FIBER_EVENT_T_KERNEL;
@@ -146,9 +146,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 't':
             if (strcasecmp(optarg, "poll") == 0) {
-                event_type = NET_EVENT_TYPE_POLL;
+                event_type = NIO_EVENT_TYPE_POLL;
             } else if (strcasecmp(optarg, "select") == 0) {
-                event_type = NET_EVENT_TYPE_SELECT;
+                event_type = NIO_EVENT_TYPE_SELECT;
             }
 			break;
         case 'm':
@@ -175,11 +175,11 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	printf("NET_FILE size is %zd\r\n", sizeof(NET_FILE));
+	printf("NIO_FILE size is %zd\r\n", sizeof(NIO_FILE));
 
 	printf("listen on %s:%d\r\n", addr, port);
 
-    net_event_debug(1);
+    nio_event_debug(1);
 
     if (fiber_mode) {
         printf("Run event_server in fiber mode...\r\n");
