@@ -58,6 +58,7 @@ static void event_add_read(int epfd, int fd) {
 	}
 }
 
+static int del_count = 0;
 static void event_del_read(int epfd, int fd) {
 	struct epoll_event ev;
 
@@ -65,6 +66,7 @@ static void event_del_read(int epfd, int fd) {
 	ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
 	ev.data.fd = fd;
 
+    del_count++;
 	if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &ev) == -1) {
 		printf("epoll_ctl error: %s", acl::last_serror());
 		exit (1);
@@ -240,9 +242,9 @@ int main(int argc, char *argv[]) {
     go[fibers] {
         while (true) {
             acl::fiber::delay(1000);
-            printf("box_min: %zd, box_max: %zd, box_count: %zd, box_idle: %zd\r\n",
+            printf("box_min: %zd, box_max: %zd, box_count: %zd, box_idle: %zd, del: %d\r\n",
                     fibers->get_box_min(), fibers->get_box_max(),
-                    fibers->get_box_count(), fibers->get_box_idle());
+                    fibers->get_box_count(), fibers->get_box_idle(), del_count);
         }
     };
 

@@ -75,7 +75,7 @@ static void listen_callback(NIO_EVENT *ev, NIO_FILE *fe) {
 }
 
 static void run(int lfd, int event_type, int event_max, bool fiber_mode) {
-	NIO_EVENT *ev = nio_event_create(event_max, event_type);
+	NIO_EVENT *ev = nio_event_create(event_max, event_type, 0);
 	assert(ev);
 
     if (fiber_mode) {
