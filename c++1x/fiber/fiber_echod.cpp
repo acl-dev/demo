@@ -33,10 +33,10 @@ int main(void) {
 				}
 				delete conn;
 			};
-            printf(">>create echo fiber-%d\r\n", acl_fiber_id(fb2));
+            printf(">>create echo fiber-%d\r\n", fb2->get_id());
 		}
 	};
-    printf(">>>server fiber-%d\r\n", acl_fiber_id(fb));
+    printf(">>>server fiber-%d\r\n", fb->get_id());
 
 	acl::fiber::schedule();	// start fiber schedule
 	return 0;

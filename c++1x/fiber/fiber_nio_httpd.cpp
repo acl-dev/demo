@@ -14,6 +14,7 @@
 #include <nio/client_socket.hpp>
 #include <nio/server_socket.hpp>
 
+// Http handle process.
 class http_servlet : public acl::HttpServlet {
 public:
     http_servlet(acl::socket_stream* conn)
@@ -76,6 +77,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
 
 static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
         const char* ip, int port) {
+    // Create one server socket and bind the specified address.
     nio::server_socket server(ev);
     if (!server.open(ip, port)) {
         printf("Listen error %s, addr: %s:%d\r\n", strerror(errno), ip, port);
@@ -84,6 +86,7 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
 
     printf("Listen %s:%d ok\r\n", ip, port);
 
+    // Register accept callback.
     server.set_on_accept([&fibers, &ev] (nio::socket_t fd, const std::string& addr) {
         printf("Accept one client from %s, fd: %d\r\n", addr.c_str(), fd);
         auto* client = new nio::client_socket(ev, fd);
@@ -97,6 +100,7 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
     // Set accept await event.
     server.accept_await();
 
+    // The IO event loop.
     while (true) {
         ev.wait(1000);
     }

@@ -15,6 +15,7 @@
 #include <nio/server_socket.hpp>
 
 static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
+    // Register IO read event callback to handle the read process.
     (*client).on_read([&fibers, client](nio::socket_t fd, bool expired) {
         if (expired) {
             printf("Read timeout from fd %d\r\n", fd);
@@ -22,30 +23,40 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
             return;
         }
 
+        // First: disable the IO read callback.
         client->read_disable();
 
+        // Push the read process in fiber_pool, which will be handled by one fiber.
         fibers.exec([] (nio::client_socket* cli) {
+            // Read from the client socket in one fiber.
             char buf[4096];
             auto ret = cli->read(buf, sizeof(buf));
+
+            // Echo back to the client.
             if (ret <= 0 ||cli->write(buf, ret) != ret) {
+                // Cloe the client socket if some error happens.
                 cli->close_await();
             } else {
-                cli->read_await();
+                // Enable the IO read process again.
+                cli->read_await(5000);
             }
         }, client);
     }).on_error([client](nio::socket_t) {
-        client->close_await();
+        client->close_await();  // Close the client socket.
     }).on_close([client](nio::socket_t fd) {
         printf("Closing client fd %d\r\n", fd);
 
+        // Free the client object when connection disconnecting.
         delete client;
     });
 
+    // Enable the IO read process with 5000 ms timeout limit for the first time.
     client->read_await(5000);
 }
 
 static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
         const char* ip, int port) {
+    // Create one server socket and bind it with the specified address.
     nio::server_socket server(ev);
     if (!server.open(ip, port)) {
         printf("Listen error %s, addr: %s:%d\r\n", strerror(errno), ip, port);
@@ -54,18 +65,23 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
 
     printf("Listen %s:%d ok\r\n", ip, port);
 
+    // Register the event callback to handle an established connection.
     server.set_on_accept([&fibers, &ev] (nio::socket_t fd, const std::string& addr) {
         printf("Accept one client from %s, fd: %d\r\n", addr.c_str(), fd);
+
+        // Create one socket client object and handle it.
         auto* client = new nio::client_socket(ev, fd);
         handle_client(fibers, client);
-    }).set_on_error([]() {
+    }).set_on_error([]() { // Some error happen in the server socket.
         printf("Accept error %s\r\n", strerror(errno));
-    }).set_on_close([]() {
+    }).set_on_close([]() { // When server socket closing.
         printf("server socket closed\r\n");
     });
 
+    // Enable the server socket in async status waiting for connections.
     server.accept_await();
 
+    // Event loop process.
     while (true) {
         ev.wait(1000);
     }
@@ -110,9 +126,11 @@ int main(int argc, char *argv[]) {
     const char* ip = "127.0.0.1";
     int port = 8288;
 
+    // Create the fiber pool to execute any task.
     std::shared_ptr<acl::fiber_pool> fibers
         (new acl::fiber_pool(10, 100, -1, 500, 32000, false));
 
+    // Create one backend fiber to show the fiber pool's running status.
     go[fibers] {
         while (true) {
             acl::fiber::delay(1000);
@@ -122,12 +140,19 @@ int main(int argc, char *argv[]) {
         }
     };
 
+    // Create asynchronous nio fiber. 
     go[fibers, etype, flags, ip, port] {
+        // Create asynchronous event handle.
         nio::nio_event ev(102400, etype, flags);
+
+        // Start the IO event loop process in the current fiber.
         server_run(*fibers, ev, ip, port);
     };
 
+    // Enable all fibers sharing the same epoll handle in fiber internal.
     acl::fiber::share_epoll(true);
+
+    // Start the fiber schedule process.
     acl::fiber::schedule();
     return 0;
 }

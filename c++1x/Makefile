@@ -43,7 +43,7 @@ $(shell mkdir -p $(BIN) )
 all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool \
 	tcp_server tcp_server2 tcp_client udp_server udp_client \
 	go_waiter fiber_tbox tbox fiber_tbox2 fiber_mutex fiber_sbox \
-	fiber_pool
+	fiber_nio_echod fiber_nio_httpd fiber_pool
 
 clean cl:
 	@(rm -f	$(BIN)/fiber_httpd)
@@ -64,6 +64,8 @@ clean cl:
 	@(rm -f $(BIN)/fiber_mutex)
 	@(rm -f $(BIN)/fiber_sbox)
 	@(rm -f $(BIN)/fiber_pool)
+	@(rm -f $(BIN)/fiber_nio_echod)
+	@(rm -f $(BIN)/fiber_nio_httpd)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -153,6 +155,16 @@ fiber/fiber_sbox.o: fiber/fiber_sbox.cpp
 	g++ $(CFLAGS) fiber/fiber_sbox.cpp -o fiber/fiber_sbox.o
 
 fiber_pool: fiber/fiber_pool.o
-	g++ fiber/fiber_pool.o -o $(BIN)/fiber_pool $(ldflags)
+	g++ fiber/fiber_pool.o -o $(BIN)/fiber_pool -lnio_cpp -lnio $(ldflags)
 fiber/fiber_pool.o: fiber/fiber_pool.cpp
 	g++ $(CFLAGS) fiber/fiber_pool.cpp -o fiber/fiber_pool.o
+
+fiber_nio_echod: fiber/fiber_nio_echod.o
+	g++ fiber/fiber_nio_echod.o -o $(BIN)/fiber_nio_echod -lnio_cpp -lnio $(ldflags)
+fiber/fiber_nio_echod.o: fiber/fiber_nio_echod.cpp
+	g++ $(CFLAGS) fiber/fiber_nio_echod.cpp -o fiber/fiber_nio_echod.o
+
+fiber_nio_httpd: fiber/fiber_nio_httpd.o
+	g++ fiber/fiber_nio_httpd.o -o $(BIN)/fiber_nio_httpd -lnio_cpp -lnio $(ldflags)
+fiber/fiber_nio_httpd.o: fiber/fiber_nio_httpd.cpp
+	g++ $(CFLAGS) fiber/fiber_nio_httpd.cpp -o fiber/fiber_nio_httpd.o

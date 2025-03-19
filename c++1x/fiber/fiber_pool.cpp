@@ -11,8 +11,6 @@
 #include <acl-lib/fiber/libfiber.hpp>
 #include <acl-lib/fiber/go_fiber.hpp>
 
-#include "fiber_pool.h"
-
 static void add(acl::wait_group& wg, std::atomic_long& result, int i) {
     result += i;;
     printf("Thread-%ld, fiber-%d: add i=%d, result=%ld\n",
@@ -47,29 +45,24 @@ static void fmt_print(acl::wait_group& wg, const char* fmt, ...) {
 
 struct my_task {
     std::atomic_long res;
-    size_t max = 5;
     std::vector<int> buff;
     time_t last = time(nullptr);
-    time_t ts = 1;
 };
 
 static void add_bat(acl::wait_group& wg, my_task* task, int i) {
     task->buff.push_back(i);
     time_t now = time(nullptr);
 
-    printf("size=%zd, diff=%ld\n", task->buff.size(),
-            now - task->last);
+    printf("size=%zd, diff=%ld\n", task->buff.size(), now - task->last);
 
-    if (task->buff.size() >= task->max || now - task->last >= task->ts) {
-        for (auto& n : task->buff) {
-            task->res += n;
-            wg.done();
-        }
-
-        printf(">>>>diff=%ld<<<\r\n", now - task->last);
-        task->last = now;
-        task->buff.clear();
+    for (auto& n : task->buff) {
+        task->res += n;
+        wg.done();
     }
+
+    printf(">>>>diff=%ld<<<\r\n", now - task->last);
+    task->last = now;
+    task->buff.clear();
 }
 
 static void usage(const char *procname) {
@@ -81,15 +74,15 @@ int main(int argc, char *argv[]) {
 
     while ((ch = getopt(argc, argv, "hc:")) > 0) {
         switch (ch) {
-            case 'h':
-                usage(argv[0]);
-                return 0;
-            case 'c':
-                nfiber = atoi(optarg);
-                break;
-            default:
-                usage(argv[0]);
-                return 1;
+        case 'h':
+            usage(argv[0]);
+            return 0;
+        case 'c':
+            nfiber = atoi(optarg);
+            break;
+        default:
+            usage(argv[0]);
+            return 1;
         }
     }
 
@@ -97,8 +90,7 @@ int main(int argc, char *argv[]) {
 
     std::atomic_long result(0);
 
-    std::shared_ptr<fiber_pool> fibers
-        (new fiber_pool(nfiber, nfiber, buf, -1, 0));
+    std::shared_ptr<acl::fiber_pool> fibers(new acl::fiber_pool(nfiber, nfiber, -1, buf));
     acl::wait_group wg;
 
     //////////////////////////////////////////////////////////////////////////
@@ -128,7 +120,7 @@ int main(int argc, char *argv[]) {
 
     wg.add(1);
     std::thread([&wg, &result] {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             result++;
             ::usleep(1000);
         }
@@ -141,14 +133,12 @@ int main(int argc, char *argv[]) {
 
     wg.add(1);
     std::thread([&wg, &result, buf, nfiber] {
-        std::shared_ptr<fiber_pool> fbs
-            (new fiber_pool(nfiber, nfiber, buf, 1000, 5));
+        std::shared_ptr<acl::fiber_pool> fbs
+            (new acl::fiber_pool(nfiber, nfiber, -1, buf));
         acl::wait_group wg2;
 
         my_task task;
-        task.max  = 5;
         task.last = time(nullptr);
-        task.ts   = 1;
 
         for (int i = 0; i < 12; i++) {
             wg2.add(1);
@@ -173,7 +163,7 @@ int main(int argc, char *argv[]) {
         wg.wait();
         fibers->stop();
     };
- 
+
     struct timeval begin;
     gettimeofday(&begin, nullptr);
 
