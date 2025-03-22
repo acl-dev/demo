@@ -66,6 +66,8 @@ clean cl:
 	@(rm -f $(BIN)/fiber_pool)
 	@(rm -f $(BIN)/fiber_nio_echod)
 	@(rm -f $(BIN)/fiber_nio_httpd)
+	@(rm -f $(BIN)/nio_echod)
+	@(rm -f $(BIN)/nio_httpd)
 	@echo "All programs have been removed!"
 	@(rm -f */*.o)
 	@echo "All objects have been removed!"
@@ -168,3 +170,16 @@ fiber_nio_httpd: fiber/fiber_nio_httpd.o
 	g++ fiber/fiber_nio_httpd.o -o $(BIN)/fiber_nio_httpd -lnio_cpp -lnio $(ldflags)
 fiber/fiber_nio_httpd.o: fiber/fiber_nio_httpd.cpp
 	g++ $(CFLAGS) fiber/fiber_nio_httpd.cpp -o fiber/fiber_nio_httpd.o
+
+nio_echod: fiber/nio_echod.o fiber/nio_server.o
+	g++ fiber/nio_echod.o fiber/nio_server.o -o $(BIN)/nio_echod -lnio_cpp -lnio $(ldflags)
+fiber/nio_echod.o: fiber/nio_echod.cpp
+	g++ $(CFLAGS) fiber/nio_echod.cpp -o fiber/nio_echod.o
+
+nio_httpd: fiber/nio_httpd.o fiber/nio_server.o
+	g++ fiber/nio_httpd.o fiber/nio_server.o -o $(BIN)/nio_httpd -lnio_cpp -lnio $(ldflags)
+fiber/nio_httpd.o: fiber/nio_httpd.cpp
+	g++ $(CFLAGS) fiber/nio_httpd.cpp -o fiber/nio_httpd.o
+
+fiber/nio_server.o: fiber/nio_server.cpp
+	g++ $(CFLAGS) fiber/nio_server.cpp -o fiber/nio_server.o

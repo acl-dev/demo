@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
     // Execute in the fibers of another thread.
 
     wg.add(1);
-    std::thread([&wg, &result, buf, nfiber] {
+    std::thread([&wg, buf, nfiber] {
         std::shared_ptr<acl::fiber_pool> fbs
             (new acl::fiber_pool(nfiber, nfiber, -1, buf));
         acl::wait_group wg2;

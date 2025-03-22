@@ -33,9 +33,9 @@ public:
 };
 
 static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
-    acl::socket_stream* conn = new acl::socket_stream;
+    auto* conn = new acl::socket_stream;
     conn->open(client->sock_handle());
-    http_servlet* serv = new http_servlet(conn);
+    auto* serv = new http_servlet(conn);
 
     (*client).on_read([&fibers, client, serv](nio::socket_t fd, bool expired) {
         if (expired) {
