@@ -47,7 +47,8 @@ int main(int argc, char *argv[]) {
 
     nio_server server(ip, port);
     server.set_nio_event(etype)
-        .set_on_accept([](nio::client_socket&, const std::string&) -> bool {
+        .set_on_accept([](nio::client_socket& client, const std::string&) -> bool {
+            printf("Client connected fd %d\r\n", client.sock_handle());
             return true;
         }).set_on_read([] (nio::client_socket& client) -> bool {
             char buf[4096];
@@ -61,7 +62,8 @@ int main(int argc, char *argv[]) {
             return true;
         }).set_on_timeout([] (nio::client_socket&) -> bool {
             return false;
-        }).set_on_close([](nio::client_socket&) {
+        }).set_on_close([](nio::client_socket& client) {
+            printf("Disconnect client fd %d\r\n", client.sock_handle());
         });
 
     server.start();

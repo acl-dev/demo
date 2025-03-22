@@ -43,7 +43,7 @@ $(shell mkdir -p $(BIN) )
 all: fiber_httpd redis_thread redis_pipeline fiber_echod thread_pool \
 	tcp_server tcp_server2 tcp_client udp_server udp_client \
 	go_waiter fiber_tbox tbox fiber_tbox2 fiber_mutex fiber_sbox \
-	fiber_nio_echod fiber_nio_httpd fiber_pool
+	fiber_nio_echod fiber_nio_httpd fiber_pool nio_echod nio_httpd
 
 clean cl:
 	@(rm -f	$(BIN)/fiber_httpd)

@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
             auto* serv = new http_servlet(conn);
             auto* ctx = new std::tuple<acl::socket_stream*, http_servlet*>(conn, serv);
             client.set_ctx(ctx);
+            printf("Client connected fd %d\r\n", client.sock_handle());
             return true;
         }).set_on_read([] (nio::client_socket& client) -> bool {
             auto* ctx = (std::tuple<acl::socket_stream*, http_servlet*>*) client.get_ctx();
@@ -87,6 +88,7 @@ int main(int argc, char *argv[]) {
             delete conn;
             delete serv;
             delete ctx;
+            printf("Disconnect client fd %d\r\n", client.sock_handle());
         });
 
     server.start();
