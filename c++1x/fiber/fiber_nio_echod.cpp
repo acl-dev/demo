@@ -57,7 +57,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
 static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
         const char* ip, int port) {
     // Create one server socket and bind it with the specified address.
-    nio::server_socket server(ev);
+    nio::server_socket server;
     if (!server.open(ip, port)) {
         printf("Listen error %s, addr: %s:%d\r\n", strerror(errno), ip, port);
         return;
@@ -79,7 +79,7 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
     });
 
     // Enable the server socket in async status waiting for connections.
-    server.accept_await();
+    server.accept_await(ev);
 
     // Event loop process.
     while (true) {

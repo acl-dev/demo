@@ -7,11 +7,11 @@ namespace acl {
     class fiber_pool;
 }
 
-using server_on_accept = std::function<bool(nio::client_socket& client,
-        const std::string& addr)>;
-using client_on_read = std::function<bool(nio::client_socket& client)>;
-using client_on_timeout = std::function<bool(nio::client_socket& client)>;
-using client_on_close = std::function<void(nio::client_socket& client)>;
+using server_on_accept = std::function<bool(nio::client_socket &client,
+        const std::string &addr)>;
+using client_on_read = std::function<bool(nio::client_socket &client)>;
+using client_on_timeout = std::function<bool(nio::client_socket &client)>;
+using client_on_close = std::function<void(nio::client_socket &client)>;
 
 class nio_server {
 public:
@@ -36,10 +36,10 @@ private:
     nio::nio_event_t etype_ = nio::NIO_EVENT_T_KERNEL;
 
 private:
-    acl::fiber_pool* fibers_;
+    acl::fiber_pool *fibers_;
     std::string ip_;
     int port_;
 
-    void run_await();
-    void handle_client(nio::client_socket* client);
+    void run_await(nio::server_socket *server);
+    void handle_client(nio::client_socket *client);
 };

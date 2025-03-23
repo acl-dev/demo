@@ -50,35 +50,44 @@ void nio_server::start() {
     go[] {
         while (true) { acl::fiber::delay(1000); }
     };
-    go[this] {
-        run_await();
+
+    auto *server = new nio::server_socket;
+    if (!server->open(ip_.c_str(), port_)) {
+        printf("Open %s:%d error %s\r\n", ip_.c_str(), port_, strerror(errno));
+        return;
+    }
+    printf("Listen %s:%d ok\r\n", ip_.c_str(), port_);
+
+    go[this, server] {
+        run_await(server);
     };
 
     acl::fiber::share_epoll(true);
     acl::fiber::schedule();
 }
 
-void nio_server::run_await() {
+void nio_server::run_await(nio::server_socket *server) {
     nio::nio_event ev(102400, etype_, nio::NIO_EVENT_F_DIRECT);
-    nio::server_socket server(ev);
 
-    if (!server.open(ip_.c_str(), port_)) {
-        printf("Open %s:%d error %s\r\n", ip_.c_str(), port_, strerror(errno));
-        return;
-    }
+    go[this, &ev, server] {
+        while (true) {
+            std::string addr;
+            nio::socket_t fd = server->accept(&addr);
+            if (fd == nio::invalid_socket) {
+                printf("Accept error %s\r\n", strerror(errno));
+                break;
+            }
 
-    server.set_on_accept([this, &ev] (nio::socket_t fd, const std::string& addr) {
-        auto* client = new nio::client_socket(ev, fd);
-        if (on_accept_ && !on_accept_(*client, addr)) {
-            delete client;
-            return;
+            auto* client = new nio::client_socket(ev, fd);
+            if (on_accept_ && !on_accept_(*client, addr)) {
+                delete client;
+            } else {
+                handle_client(client);
+            }
         }
-        handle_client(client);
-    }).set_on_error([]() {
-    }).set_on_close([]() {
-    });
 
-    server.accept_await();
+        delete server;
+    };
 
     while (true) {
         ev.wait(1000);
