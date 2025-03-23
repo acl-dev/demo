@@ -7,6 +7,10 @@ namespace acl {
     class fiber_pool;
 }
 
+namespace nio {
+    class server_socket;
+};
+
 using server_on_accept = std::function<bool(nio::client_socket &client,
         const std::string &addr)>;
 using client_on_read = std::function<bool(nio::client_socket &client)>;
