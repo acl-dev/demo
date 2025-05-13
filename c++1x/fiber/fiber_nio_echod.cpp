@@ -48,6 +48,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
 
         // Free the client object when connection disconnecting.
         delete client;
+        return true;
     });
 
     // Enable the IO read process with 5000 ms timeout limit for the first time.

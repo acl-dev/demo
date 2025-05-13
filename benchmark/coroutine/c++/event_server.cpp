@@ -43,12 +43,12 @@ static void read_callback(NIO_EVENT *ev, NIO_FILE *fe) {
 	int ret = read(fe->fd, buf, sizeof(buf));
 	if (ret <= 0) {
         printf("Read error, close fd: %d\r\n", fe->fd);
-		nio_event_close(ev, fe);
+		nio_event_del_readwrite(ev, fe);
 		close(fe->fd);
 		nio_file_free(fe);
 	} else if (write(fe->fd, buf, ret) <= 0) {
         printf("Write error, close fd: %d\r\n", fe->fd);
-		nio_event_close(ev, fe);
+		nio_event_del_readwrite(ev, fe);
 		close(fe->fd);
 		nio_file_free(fe);
 	}

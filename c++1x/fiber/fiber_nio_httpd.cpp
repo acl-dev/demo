@@ -69,6 +69,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
         delete serv;
 
         delete client;
+        return true;
     });
 
     // Enable read await event for the first time.

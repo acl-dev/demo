@@ -121,6 +121,7 @@ void nio_server::handle_client(nio::client_socket* client) {
             on_close_(*client);
         }
         delete client;
+        return true;
     });
 
     client->read_await(5000);

@@ -79,6 +79,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
         delete serv;
 
         delete client;
+        return true;
     });
 
     client->read_await(5000);
@@ -86,7 +87,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
 
 static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
         const char* ip, int port) {
-    nio::server_socket server(ev);
+    nio::server_socket server(1024);
     if (!server.open(ip, port)) {
         printf("Listen error %s, addr: %s:%d\r\n", strerror(errno), ip, port);
         return;
@@ -104,7 +105,7 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
         printf("server socket closed\r\n");
     });
 
-    server.accept_await();
+    server.accept_await(ev);
 
     while (true) {
         ev.wait(1000);
