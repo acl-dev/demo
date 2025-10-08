@@ -15,6 +15,7 @@
 #include <nio/server_socket.hpp>
 
 static bool use_http = false;
+static bool directly = false, keepio = false, oneshot = false;
 
 class http_servlet : public acl::HttpServlet {
 public:
@@ -47,7 +48,7 @@ static void echo_serv(nio::client_socket* client) {
     if (ret <= 0 ||client->write(buf, ret) != ret) {
         client->close_await();
     } else {
-        client->read_await();
+        client->read_await(50000);
     }
 }
 
@@ -63,7 +64,9 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
             return;
         }
 
-        client->read_disable();
+        if (!oneshot) {
+            client->read_disable();
+        }
 
         if (use_http) {
             fibers.exec(http_serv, client, serv);
@@ -82,7 +85,7 @@ static void handle_client(acl::fiber_pool& fibers, nio::client_socket* client) {
         return true;
     });
 
-    client->read_await(5000);
+    client->read_await(50000);
 }
 
 static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
@@ -95,10 +98,14 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
 
     printf("Listen %s:%d ok\r\n", ip, port);
 
-    server.set_on_accept([&fibers, &ev] (nio::socket_t fd, const std::string& addr) {
+    server.set_on_accept([&fibers, &ev, &server] (nio::socket_t fd, const std::string& addr) {
         printf("Accept one client from %s, fd: %d\r\n", addr.c_str(), fd);
         auto* client = new nio::client_socket(ev, fd);
         handle_client(fibers, client);
+
+        if (oneshot) {
+            server.accept_await(ev);
+        }
     }).set_on_error([]() {
         printf("Accept error %s\r\n", strerror(errno));
     }).set_on_close([]() {
@@ -114,18 +121,23 @@ static void server_run(acl::fiber_pool& fibers, nio::nio_event& ev,
 
 static void usage(const char* proc) {
     printf("usage: %s -h [help]\r\n"
+        " -S [if show fibers' status, default: false]\r\n"
         " -H [if running in http server mode]\r\n"
         " -C [if nio event using caching mode, default: NIO_EVENT_F_DIRECT\r\n"
         " -e nio_event type[kernel|poll|select, default: kernel]\r\n"
+        " -D [if using directly event mode in fiber, default: false]\r\n"
+        " -K [if using keep IO event in fiber, default: false]\r\n"
+        " -O [if useing oneshot event in fiber, default: false]\r\n"
         , proc);
 }
 
 int main(int argc, char *argv[]) {
     unsigned flags = nio::NIO_EVENT_F_DIRECT;
     nio::nio_event_t etype = nio::NIO_EVENT_T_KERNEL;
+    bool show_fibers =  false;
     int ch;
 
-    while ((ch = getopt(argc, argv, "hHCe:")) > 0) {
+    while ((ch = getopt(argc, argv, "hHCe:SDKO")) > 0) {
         switch (ch) {
         case 'h':
             usage(argv[0]);
@@ -143,6 +155,19 @@ int main(int argc, char *argv[]) {
                 etype = nio::NIO_EVENT_T_SELECT;
             }
             break;
+        case 'S':
+            show_fibers = true;
+            break;
+        case 'D':
+            directly = true;
+            break;
+        case 'K':
+            keepio = true;
+            break;
+        case 'O':
+            oneshot = true;
+            flags |= nio::NIO_EVENT_F_ONESHOT;
+            break;
         default:
             usage(argv[0]);
             return 1;
@@ -150,6 +175,11 @@ int main(int argc, char *argv[]) {
     }
 
     signal(SIGPIPE, SIG_IGN);
+
+    acl::fiber::set_event_directly(directly);
+    acl::fiber::set_event_keepio(keepio);
+    acl::fiber::set_event_oneshot(oneshot);
+
     nio::nio_event::debug(true);
 
     const char* ip = "127.0.0.1";
@@ -158,14 +188,16 @@ int main(int argc, char *argv[]) {
     std::shared_ptr<acl::fiber_pool> fibers
         (new acl::fiber_pool(10, 100, -1, 500, 32000, false));
 
-    go[fibers] {
-        while (true) {
-            acl::fiber::delay(1000);
-            printf("box_min: %zd, box_max: %zd, box_count: %zd, box_idle: %zd\r\n",
+    if (show_fibers) {
+        go[fibers] {
+            while (true) {
+                acl::fiber::delay(1000);
+                printf("box_min: %zd, box_max: %zd, box_count: %zd, box_idle: %zd\r\n",
                     fibers->get_box_min(), fibers->get_box_max(),
                     fibers->get_box_count(), fibers->get_box_idle());
-        }
-    };
+            }
+        };
+    }
 
     go[fibers, etype, flags, ip, port] {
         nio::nio_event ev(102400, etype, flags);

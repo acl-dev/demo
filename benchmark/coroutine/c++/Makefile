@@ -74,7 +74,12 @@ uv_server: uv_server.o
 uv_server.o: uv_server.cpp
 	g++ $(CFLAGS) uv_server.cpp -o uv_server.o
 
-fiber_nio: fiber_nio.o
+acl_path = /home/zsx/workspace/github/acl
+acl_libs = $(acl_path)/lib_fiber/lib/libfiber_cpp.a $(acl_path)/libacl_all.a $(acl_path)/lib_fiber/lib/libfiber.a
+nio_libs = /home/zsx/workspace/gitee/libnio/cpp/lib/libnio_cpp.a /home/zsx/workspace/gitee/libnio/c/lib/libnio.a
+
+fiber_nio: fiber_nio.o $(acl_libs) $(nio_libs)
+#	g++ fiber_nio.o -o fiber_nio -luv $(nio_libs) $(acl_libs) -ldl -lpthread -lz
 	g++ fiber_nio.o -o fiber_nio -luv -lnio_cpp -lnio $(ldflags)
 fiber_nio.o: fiber_nio.cpp
 	g++ $(CFLAGS) fiber_nio.cpp -o fiber_nio.o
